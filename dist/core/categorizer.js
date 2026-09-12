@@ -1,5 +1,17 @@
 export const CANONICAL_CATEGORIES = [
     {
+        id: 'slash-commands',
+        name: 'Slash Commands & Workflows (/)',
+        icon: 'Terminal',
+        color: 'cyan',
+        description: 'Manually executable slash commands (/plan, /review-pr, /cost-report, /quality-gate, etc.) designed for direct human invocation.',
+        keywords: [
+            'workflow', 'slash-command', 'command', 'user-invoked', 'manual',
+            'plan', 'checkpoint', 'review-pr', 'quality-gate', 'cost-report',
+            'grill-me', 'aside', 'goal', 'jira', 'pr', 'epic'
+        ]
+    },
+    {
         id: 'agent-ops',
         name: 'Agent Ops & Orchestration',
         icon: 'Bot',
@@ -112,7 +124,19 @@ export const CANONICAL_CATEGORIES = [
     }
 ];
 export class Categorizer {
-    static categorize(id, rawName, description, explicitCategory) {
+    static categorize(id, rawName, description, explicitCategory, isWorkflow) {
+        // 0. If it is explicitly a workflow / slash command file
+        if (isWorkflow) {
+            const slashCat = CANONICAL_CATEGORIES[0];
+            return {
+                id: slashCat.id,
+                name: slashCat.name,
+                icon: slashCat.icon,
+                color: slashCat.color,
+                description: slashCat.description,
+                count: 0
+            };
+        }
         // 1. If explicit category matches known rules
         if (explicitCategory) {
             const match = CANONICAL_CATEGORIES.find((c) => c.id === explicitCategory.toLowerCase() || c.name.toLowerCase() === explicitCategory.toLowerCase());
@@ -127,16 +151,16 @@ export class Categorizer {
                 };
             }
         }
-        // 2. Score based on ID, Name, Description keywords
+        // 2. Score based on ID, Name, Description keywords (skipping index 0 slash-commands unless explicit)
         const textToScan = `${id} ${rawName} ${description}`.toLowerCase();
-        let bestCategory = CANONICAL_CATEGORIES[8]; // default to workflow-productivity
+        let bestCategory = CANONICAL_CATEGORIES[9]; // default to workflow-productivity
         let highestScore = 0;
-        for (const cat of CANONICAL_CATEGORIES) {
+        for (let i = 1; i < CANONICAL_CATEGORIES.length; i++) {
+            const cat = CANONICAL_CATEGORIES[i];
             let score = 0;
             for (const kw of cat.keywords) {
                 if (textToScan.includes(kw)) {
                     score += kw.length > 4 ? 3 : 1;
-                    // Exact match on skill ID gives heavy weight
                     if (id.includes(kw)) {
                         score += 5;
                     }
@@ -160,18 +184,18 @@ export class Categorizer {
         const tags = new Set();
         const fullText = `${id} ${description} ${content.slice(0, 1000)}`.toLowerCase();
         const KNOWN_TAGS = [
-            'react', 'nextjs', 'typescript', 'javascript', 'python', 'golang', 'rust',
-            'docker', 'kubernetes', 'gitops', 'playwright', 'vitest', 'pytest', 'tdd',
-            'postgres', 'clickhouse', 'mysql', 'redis', 'fastapi', 'django', 'spring-boot',
-            'quarkus', 'tailwind', 'llm-eval', 'security', 'hipaa', 'seo', 'agent-loop',
-            'prompt-engineering', 'performance', 'code-review', 'debugging', 'homelab'
+            'slash-command', 'manual-invocation', 'workflow', 'react', 'nextjs', 'typescript',
+            'javascript', 'python', 'golang', 'rust', 'docker', 'kubernetes', 'gitops',
+            'playwright', 'vitest', 'pytest', 'tdd', 'postgres', 'clickhouse', 'mysql',
+            'redis', 'fastapi', 'django', 'spring-boot', 'quarkus', 'tailwind', 'llm-eval',
+            'security', 'hipaa', 'seo', 'agent-loop', 'prompt-engineering', 'performance',
+            'code-review', 'debugging', 'homelab'
         ];
         for (const tag of KNOWN_TAGS) {
             if (fullText.includes(tag.replace('-', ' ')) || fullText.includes(tag)) {
                 tags.add(tag);
             }
         }
-        // Add id chunks
         const parts = id.split('-');
         if (parts.length > 1) {
             for (const part of parts) {

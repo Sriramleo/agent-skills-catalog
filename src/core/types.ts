@@ -5,8 +5,11 @@ export type HarnessType =
   | 'codex'
   | 'cline'
   | 'workspace'
+  | 'workflow'
   | 'global'
   | 'custom';
+
+export type InvocationType = 'manual-slash' | 'auto-reference' | 'hybrid';
 
 export interface SkillAsset {
   name: string;
@@ -45,6 +48,11 @@ export interface Skill {
   isSymlink: boolean;
   symlinkTarget?: string;
   
+  // Invocation Mode (Manual Slash vs Auto)
+  isManualSlashCommand: boolean;
+  invocationType: InvocationType;
+  slashCommand: string;
+
   // Override & Conflict Detection
   overridesGlobal?: boolean;
   isOverridden?: boolean;
@@ -59,7 +67,6 @@ export interface Skill {
   triggers: string[];
   prompts: string[];
   workflowSnippets: string[];
-  slashCommand: string;
   
   // Full details
   rawContent: string;
@@ -107,6 +114,8 @@ export interface SkillCatalogResult {
   tools: { tool: string; count: number }[];
   harnesses: HarnessInfo[];
   totalSkills: number;
+  manualSlashCount: number;
+  autoReferenceCount: number;
   overriddenCount: number;
   scannedLocations: string[];
   scanDurationMs: number;

@@ -4,7 +4,7 @@ import yaml from 'js-yaml';
 import { Categorizer } from './categorizer.js';
 export class SkillParser {
     /**
-     * Parses a raw SKILL.md file and its directory assets into a rich Skill object.
+     * Parses a raw SKILL.md or workflow.md file and its directory assets into a rich Skill object.
      */
     static parseFile(filePath, harness, harnessLabel, sourceDir) {
         try {
@@ -38,9 +38,10 @@ export class SkillParser {
             const rawContent = fs.readFileSync(realFilePath, 'utf8');
             const skillDir = path.dirname(realFilePath);
             const parentDirName = path.basename(skillDir);
-            const fallbackId = parentDirName && parentDirName !== 'skills'
-                ? parentDirName
-                : path.basename(filePath, '.md');
+            const isWorkflowDir = parentDirName === 'workflows' || path.basename(sourceDir) === 'workflows' || parentDirName === 'commands';
+            const fallbackId = isWorkflowDir
+                ? path.basename(filePath, '.md')
+                : (parentDirName && parentDirName !== 'skills' ? parentDirName : path.basename(filePath, '.md'));
             const { frontmatter, content } = this.extractFrontmatter(rawContent);
             const id = String(frontmatter.name || frontmatter.id || fallbackId || 'unknown-skill')
                 .toLowerCase()
@@ -48,12 +49,17 @@ export class SkillParser {
             const rawTitle = String(frontmatter.title || frontmatter.name || id);
             const title = this.formatTitle(rawTitle);
             const rawDescription = String(frontmatter.description || this.extractFirstParagraph(content) || 'No description provided.').trim();
-            const categoryObj = Categorizer.categorize(id, title, rawDescription, frontmatter.category);
+            // Determine if this is a Manual Slash Command
+            const { isManualSlashCommand, invocationType } = this.determineInvocationType(id, isWorkflowDir, frontmatter, rawDescription, content);
+            const categoryObj = Categorizer.categorize(id, title, rawDescription, frontmatter.category, isWorkflowDir);
             const explicitTags = Array.isArray(frontmatter.tags)
                 ? frontmatter.tags.map(String)
                 : [];
             const derivedTags = Categorizer.extractTags(id, rawDescription, content);
             const tags = Array.from(new Set([...explicitTags, ...derivedTags]));
+            if (isManualSlashCommand && !tags.includes('slash-command')) {
+                tags.unshift('slash-command');
+            }
             const whenToUse = this.extractWhenToUse(content, rawDescription);
             const howToUse = this.extractHowToUse(content);
             const triggers = this.extractTriggers(content, rawDescription);
@@ -78,12 +84,14 @@ export class SkillParser {
                 realFilePath,
                 isSymlink,
                 symlinkTarget,
+                isManualSlashCommand,
+                invocationType,
+                slashCommand,
                 whenToUse,
                 howToUse,
                 triggers,
                 prompts,
                 workflowSnippets,
-                slashCommand,
                 rawContent,
                 frontmatter,
                 assets,
@@ -97,6 +105,29 @@ export class SkillParser {
             console.error(`[SkillParser] Failed to parse ${filePath}:`, err);
             return null;
         }
+    }
+    static determineInvocationType(id, isWorkflowDir, frontmatter, description, content) {
+        // 1. If in workflows folder or frontmatter explicitly says user-invoked / slash command
+        if (isWorkflowDir ||
+            frontmatter.user_invoked === true ||
+            frontmatter.type === 'workflow' ||
+            frontmatter.slash_command === true ||
+            frontmatter.command) {
+            return { isManualSlashCommand: true, invocationType: 'manual-slash' };
+        }
+        const text = `${description} ${content}`.toLowerCase();
+        // 2. Check for explicit slash command syntax or phrases like "Invoke with /...", "Run /...", "Slash command"
+        const hasExplicitSlashTrigger = text.includes(`/${id}`) ||
+            /invoke with \/|run with \/|type \/|trigger with \/|slash[-_ ]command/i.test(text) ||
+            /\/(plan|goal|grill-me|review-pr|checkpoint|aside|learn|cost-report|quality-gate|build-fix|security-scan)/i.test(text);
+        if (hasExplicitSlashTrigger) {
+            return { isManualSlashCommand: true, invocationType: 'manual-slash' };
+        }
+        // 3. Check for coding guidelines and reference skills (auto-applied in background)
+        if (/patterns|guidelines|standards|discipline|best practices|accessibility|compliance/i.test(text)) {
+            return { isManualSlashCommand: false, invocationType: 'auto-reference' };
+        }
+        return { isManualSlashCommand: false, invocationType: 'auto-reference' };
     }
     static extractFrontmatter(raw) {
         if (!raw.startsWith('---')) {

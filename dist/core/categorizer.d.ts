@@ -9,7 +9,7 @@ export interface CategoryRule {
 }
 export declare const CANONICAL_CATEGORIES: CategoryRule[];
 export declare class Categorizer {
-    static categorize(id: string, rawName: string, description: string, explicitCategory?: string): SkillCategory;
+    static categorize(id: string, rawName: string, description: string, explicitCategory?: string, isWorkflow?: boolean): SkillCategory;
     static extractTags(id: string, description: string, content: string): string[];
 }
 //# sourceMappingURL=categorizer.d.ts.map

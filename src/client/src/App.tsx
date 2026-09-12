@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import Fuse from 'fuse.js';
-import { Skill, SkillCatalogResult, ViewMode } from './types';
+import { Skill, SkillCatalogResult, ViewMode, FilterInvocationMode } from './types';
 import { Navbar } from './components/Navbar';
 import { Sidebar } from './components/Sidebar';
 import { SkillCard } from './components/SkillCard';
@@ -40,6 +40,7 @@ export function App() {
   const [selectedHarness, setSelectedHarness] = useState<string | null>(null);
   const [selectedTag, setSelectedTag] = useState<string | null>(null);
   const [selectedTool, setSelectedTool] = useState<string | null>(null);
+  const [invocationMode, setInvocationMode] = useState<FilterInvocationMode>('all');
   const [showOnlyFavorites, setShowOnlyFavorites] = useState(false);
   const [showOnlyOverridden, setShowOnlyOverridden] = useState(false);
   const [viewMode, setViewMode] = useState<ViewMode>('grid');
@@ -197,12 +198,19 @@ export function App() {
       );
     }
 
-    // 6. Starred Filter
+    // 6. Invocation Mode Filter (Manual Slash vs Auto Reference)
+    if (invocationMode === 'slash') {
+      list = list.filter((s) => s.isManualSlashCommand);
+    } else if (invocationMode === 'auto') {
+      list = list.filter((s) => !s.isManualSlashCommand);
+    }
+
+    // 7. Starred Filter
     if (showOnlyFavorites) {
       list = list.filter((s) => favorites.has(s.id));
     }
 
-    // 7. Overridden Filter
+    // 8. Overridden Filter
     if (showOnlyOverridden) {
       list = list.filter((s) => s.overridesGlobal);
     }
@@ -215,6 +223,7 @@ export function App() {
     selectedHarness,
     selectedTag,
     selectedTool,
+    invocationMode,
     showOnlyFavorites,
     showOnlyOverridden,
     favorites,
@@ -232,6 +241,7 @@ export function App() {
     setSelectedHarness(null);
     setSelectedTag(null);
     setSelectedTool(null);
+    setInvocationMode('all');
     setShowOnlyFavorites(false);
     setShowOnlyOverridden(false);
   };
@@ -299,6 +309,8 @@ export function App() {
         onSearchChange={setSearchQuery}
         viewMode={viewMode}
         onViewModeChange={setViewMode}
+        invocationMode={invocationMode}
+        onInvocationModeChange={setInvocationMode}
         catalog={catalog}
         isLoading={isLoading}
         onRefresh={() => fetchCatalog(true)}

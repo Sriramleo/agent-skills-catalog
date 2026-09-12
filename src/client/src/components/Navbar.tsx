@@ -10,15 +10,18 @@ import {
   X,
   FileCode,
   FileJson,
-  Globe
+  Terminal,
+  Bot
 } from 'lucide-react';
-import { ViewMode, SkillCatalogResult } from '../types';
+import { ViewMode, SkillCatalogResult, FilterInvocationMode } from '../types';
 
 interface NavbarProps {
   searchQuery: string;
   onSearchChange: (q: string) => void;
   viewMode: ViewMode;
   onViewModeChange: (mode: ViewMode) => void;
+  invocationMode: FilterInvocationMode;
+  onInvocationModeChange: (mode: FilterInvocationMode) => void;
   catalog: SkillCatalogResult | null;
   isLoading: boolean;
   onRefresh: () => void;
@@ -30,6 +33,8 @@ export const Navbar: React.FC<NavbarProps> = ({
   onSearchChange,
   viewMode,
   onViewModeChange,
+  invocationMode,
+  onInvocationModeChange,
   catalog,
   isLoading,
   onRefresh,
@@ -39,7 +44,6 @@ export const Navbar: React.FC<NavbarProps> = ({
   const searchInputRef = useRef<HTMLInputElement>(null);
   const exportMenuRef = useRef<HTMLDivElement>(null);
 
-  // Global Keyboard shortcut: "/" or "Ctrl+K" / "Cmd+K" to focus search
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       if ((e.key === '/' || ((e.metaKey || e.ctrlKey) && e.key === 'k')) && document.activeElement !== searchInputRef.current) {
@@ -51,7 +55,6 @@ export const Navbar: React.FC<NavbarProps> = ({
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, []);
 
-  // Close export menu on outside click
   useEffect(() => {
     const handleClickOutside = (e: MouseEvent) => {
       if (exportMenuRef.current && !exportMenuRef.current.contains(e.target as Node)) {
@@ -82,6 +85,7 @@ export const Navbar: React.FC<NavbarProps> = ({
       const skills = catalog.skills.filter((s) => s.category === cat.id);
       for (const s of skills) {
         md += `### ${s.title} (\`${s.id}\`)\n`;
+        md += `- **Slash Command**: \`${s.slashCommand}\`\n`;
         md += `- **Description**: ${s.description}\n`;
         md += `- **When to use**: ${s.whenToUse}\n`;
         md += `- **Harness**: ${s.harnessLabel} | Tokens: ~${s.stats.tokenEstimate}\n\n`;
@@ -98,31 +102,76 @@ export const Navbar: React.FC<NavbarProps> = ({
   };
 
   return (
-    <header className="sticky top-0 z-40 w-full glass-panel border-b border-slate-800/80 px-4 lg:px-8 py-3 transition-colors">
-      <div className="max-w-7xl mx-auto flex items-center justify-between gap-4">
+    <header className="sticky top-0 z-40 w-full glass-panel border-b border-slate-800/80 px-4 lg:px-8 py-2.5 transition-colors">
+      <div className="max-w-7xl mx-auto flex flex-col md:flex-row items-center justify-between gap-3">
         
-        {/* Brand / Logo */}
-        <div className="flex items-center gap-3 shrink-0">
-          <div className="w-9 h-9 rounded-xl bg-gradient-to-tr from-cyan-500 via-indigo-500 to-purple-500 p-0.5 shadow-lg shadow-indigo-500/20 flex items-center justify-center">
-            <div className="w-full h-full bg-slate-950 rounded-[10px] flex items-center justify-center">
-              <Sparkles className="w-5 h-5 text-cyan-400" />
+        {/* Top Row: Brand & Mode Switcher */}
+        <div className="flex items-center justify-between w-full md:w-auto gap-4">
+          <div className="flex items-center gap-3 shrink-0">
+            <div className="w-9 h-9 rounded-xl bg-gradient-to-tr from-cyan-500 via-indigo-500 to-purple-500 p-0.5 shadow-lg shadow-indigo-500/20 flex items-center justify-center">
+              <div className="w-full h-full bg-slate-950 rounded-[10px] flex items-center justify-center">
+                <Sparkles className="w-5 h-5 text-cyan-400" />
+              </div>
+            </div>
+            <div>
+              <div className="flex items-center gap-2">
+                <span className="font-bold text-base bg-gradient-to-r from-cyan-400 via-indigo-300 to-purple-300 bg-clip-text text-transparent">
+                  Skills Catalog
+                </span>
+                <span className="text-[10px] px-1.5 py-0.5 rounded bg-indigo-500/20 text-indigo-300 font-mono border border-indigo-500/30">
+                  v1.0
+                </span>
+              </div>
+              <p className="text-[11px] text-slate-400 hidden sm:block">Universal Agent Skills Hub</p>
             </div>
           </div>
-          <div>
-            <div className="flex items-center gap-2">
-              <span className="font-bold text-base bg-gradient-to-r from-cyan-400 via-indigo-300 to-purple-300 bg-clip-text text-transparent">
-                Skills Catalog
-              </span>
-              <span className="text-[10px] px-1.5 py-0.5 rounded bg-indigo-500/20 text-indigo-300 font-mono border border-indigo-500/30">
-                v1.0
-              </span>
-            </div>
-            <p className="text-[11px] text-slate-400 hidden sm:block">Universal Agent Skills Hub</p>
+
+          {/* Invocation Mode Switcher (All / Manual Slash / Auto Reference) */}
+          <div className="flex items-center bg-slate-900/90 border border-slate-800 rounded-xl p-1 text-xs">
+            <button
+              onClick={() => onInvocationModeChange('all')}
+              className={`px-2.5 py-1 rounded-lg font-medium transition flex items-center gap-1.5 ${
+                invocationMode === 'all'
+                  ? 'bg-slate-800 text-white shadow-sm'
+                  : 'text-slate-400 hover:text-slate-200'
+              }`}
+            >
+              <span>All</span>
+              {catalog && <span className="text-[10px] font-mono text-slate-400">({catalog.totalSkills})</span>}
+            </button>
+
+            <button
+              onClick={() => onInvocationModeChange('slash')}
+              className={`px-2.5 py-1 rounded-lg font-medium transition flex items-center gap-1.5 ${
+                invocationMode === 'slash'
+                  ? 'bg-gradient-to-r from-cyan-600 to-indigo-600 text-white shadow-sm font-semibold'
+                  : 'text-cyan-400 hover:text-cyan-300'
+              }`}
+              title="Filter by manual slash command skills (/plan, /cost-report, /jira, etc.)"
+            >
+              <Terminal className="w-3.5 h-3.5" />
+              <span>Manual (/)</span>
+              {catalog && <span className="text-[10px] font-mono opacity-80">({catalog.manualSlashCount})</span>}
+            </button>
+
+            <button
+              onClick={() => onInvocationModeChange('auto')}
+              className={`px-2.5 py-1 rounded-lg font-medium transition flex items-center gap-1.5 ${
+                invocationMode === 'auto'
+                  ? 'bg-slate-800 text-white shadow-sm'
+                  : 'text-slate-400 hover:text-slate-200'
+              }`}
+              title="Filter by auto-loaded reference guidelines and patterns"
+            >
+              <Bot className="w-3.5 h-3.5 text-indigo-400" />
+              <span>Auto-Loaded</span>
+              {catalog && <span className="text-[10px] font-mono text-slate-400">({catalog.autoReferenceCount})</span>}
+            </button>
           </div>
         </div>
 
         {/* Live Search Bar */}
-        <div className="flex-1 max-w-xl relative">
+        <div className="flex-1 w-full md:max-w-md relative">
           <div className="relative flex items-center">
             <Search className="absolute left-3.5 w-4 h-4 text-slate-400 pointer-events-none" />
             <input
@@ -130,8 +179,8 @@ export const Navbar: React.FC<NavbarProps> = ({
               type="text"
               value={searchQuery}
               onChange={(e) => onSearchChange(e.target.value)}
-              placeholder="Search by skill name, keyword, tag, or when-to-use... (Press / to focus)"
-              className="w-full pl-10 pr-10 py-2 text-sm bg-slate-900/90 hover:bg-slate-900 focus:bg-slate-900 border border-slate-700/80 focus:border-cyan-500 rounded-xl text-slate-100 placeholder:text-slate-500 outline-none transition shadow-inner focus:ring-2 focus:ring-cyan-500/20"
+              placeholder="Search by name, /slash command, keyword, or tool... (/)"
+              className="w-full pl-10 pr-10 py-1.5 text-xs sm:text-sm bg-slate-900/90 hover:bg-slate-900 focus:bg-slate-900 border border-slate-700/80 focus:border-cyan-500 rounded-xl text-slate-100 placeholder:text-slate-500 outline-none transition shadow-inner focus:ring-2 focus:ring-cyan-500/20"
             />
             {searchQuery ? (
               <button
@@ -142,7 +191,7 @@ export const Navbar: React.FC<NavbarProps> = ({
                 <X className="w-4 h-4" />
               </button>
             ) : (
-              <kbd className="absolute right-3 hidden sm:inline-flex items-center gap-0.5 text-[10px] font-mono font-medium text-slate-400 bg-slate-800 border border-slate-700 rounded px-1.5 py-0.5">
+              <kbd className="absolute right-3 hidden sm:inline-flex items-center text-[10px] font-mono font-medium text-slate-400 bg-slate-800 border border-slate-700 rounded px-1.5 py-0.5">
                 /
               </kbd>
             )}
@@ -150,7 +199,7 @@ export const Navbar: React.FC<NavbarProps> = ({
         </div>
 
         {/* Action Controls & View Switcher */}
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-2 shrink-0">
           
           {/* View Mode Toggle */}
           <div className="flex items-center bg-slate-900/80 border border-slate-800 rounded-xl p-1 text-slate-400">
@@ -164,7 +213,7 @@ export const Navbar: React.FC<NavbarProps> = ({
               title="Grid Cards View"
             >
               <LayoutGrid className="w-4 h-4" />
-              <span className="hidden md:inline">Cards</span>
+              <span className="hidden lg:inline">Cards</span>
             </button>
             <button
               onClick={() => onViewModeChange('table')}
@@ -176,7 +225,7 @@ export const Navbar: React.FC<NavbarProps> = ({
               title="Table View"
             >
               <TableIcon className="w-4 h-4" />
-              <span className="hidden md:inline">Table</span>
+              <span className="hidden lg:inline">Table</span>
             </button>
             <button
               onClick={() => onViewModeChange('dashboard')}
@@ -188,7 +237,7 @@ export const Navbar: React.FC<NavbarProps> = ({
               title="Analytics Dashboard"
             >
               <BarChart3 className="w-4 h-4" />
-              <span className="hidden md:inline">Stats</span>
+              <span className="hidden lg:inline">Stats</span>
             </button>
           </div>
 
@@ -196,7 +245,7 @@ export const Navbar: React.FC<NavbarProps> = ({
           <div className="relative" ref={exportMenuRef}>
             <button
               onClick={() => setShowExportMenu(!showExportMenu)}
-              className="px-3 py-2 text-xs font-medium bg-slate-900 hover:bg-slate-800 border border-slate-700/80 hover:border-slate-600 rounded-xl text-slate-200 flex items-center gap-1.5 transition"
+              className="px-2.5 py-1.5 text-xs font-medium bg-slate-900 hover:bg-slate-800 border border-slate-700/80 hover:border-slate-600 rounded-xl text-slate-200 flex items-center gap-1.5 transition"
               title="Export Catalog"
             >
               <Download className="w-3.5 h-3.5 text-cyan-400" />
@@ -231,7 +280,7 @@ export const Navbar: React.FC<NavbarProps> = ({
           <button
             onClick={onRefresh}
             disabled={isLoading}
-            className="p-2 bg-slate-900 hover:bg-slate-800 border border-slate-700/80 rounded-xl text-slate-400 hover:text-slate-200 transition disabled:opacity-50"
+            className="p-1.5 bg-slate-900 hover:bg-slate-800 border border-slate-700/80 rounded-xl text-slate-400 hover:text-slate-200 transition disabled:opacity-50"
             title="Rescan Skill Directories"
           >
             <RotateCw className={`w-4 h-4 ${isLoading ? 'animate-spin text-cyan-400' : ''}`} />

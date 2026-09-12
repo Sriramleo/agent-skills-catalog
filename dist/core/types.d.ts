@@ -1,4 +1,5 @@
-export type HarnessType = 'antigravity' | 'claude-code' | 'cursor' | 'codex' | 'cline' | 'workspace' | 'global' | 'custom';
+export type HarnessType = 'antigravity' | 'claude-code' | 'cursor' | 'codex' | 'cline' | 'workspace' | 'workflow' | 'global' | 'custom';
+export type InvocationType = 'manual-slash' | 'auto-reference' | 'hybrid';
 export interface SkillAsset {
     name: string;
     relativePath: string;
@@ -32,6 +33,9 @@ export interface Skill {
     realFilePath: string;
     isSymlink: boolean;
     symlinkTarget?: string;
+    isManualSlashCommand: boolean;
+    invocationType: InvocationType;
+    slashCommand: string;
     overridesGlobal?: boolean;
     isOverridden?: boolean;
     overriddenPath?: string;
@@ -41,7 +45,6 @@ export interface Skill {
     triggers: string[];
     prompts: string[];
     workflowSnippets: string[];
-    slashCommand: string;
     rawContent: string;
     frontmatter: Record<string, any>;
     assets: SkillAsset[];
@@ -92,6 +95,8 @@ export interface SkillCatalogResult {
     }[];
     harnesses: HarnessInfo[];
     totalSkills: number;
+    manualSlashCount: number;
+    autoReferenceCount: number;
     overriddenCount: number;
     scannedLocations: string[];
     scanDurationMs: number;

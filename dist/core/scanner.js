@@ -6,8 +6,17 @@ import { CANONICAL_CATEGORIES } from './categorizer.js';
 import { SecurityGuard } from './security.js';
 export const KNOWN_HARNESS_LOCATIONS = [
     {
+        harness: 'workflow',
+        label: 'Workspace Slash Workflows (/...)',
+        name: 'Workspace Workflows (/)',
+        icon: 'Terminal',
+        description: 'Manually executable slash workflows in .agents/workflows.',
+        isWorkspaceRelative: true,
+        subPath: path.join('.agents', 'workflows')
+    },
+    {
         harness: 'workspace',
-        label: 'Workspace Agents (.agents)',
+        label: 'Workspace Agents (.agents/skills)',
         name: 'Workspace (.agents/skills)',
         icon: 'FolderGit2',
         description: 'Project-level skills stored in .agents/skills directory.',
@@ -22,6 +31,15 @@ export const KNOWN_HARNESS_LOCATIONS = [
         description: 'Claude Code project skills in .claude/skills.',
         isWorkspaceRelative: true,
         subPath: path.join('.claude', 'skills')
+    },
+    {
+        harness: 'workflow',
+        label: 'Claude Custom Commands (/)',
+        name: 'Claude Commands (/)',
+        icon: 'Terminal',
+        description: 'Custom slash commands in .claude/commands.',
+        isWorkspaceRelative: true,
+        subPath: path.join('.claude', 'commands')
     },
     {
         harness: 'cursor',
@@ -177,7 +195,6 @@ export class SkillScanner {
                                 if (skillsMap.has(parsed.id)) {
                                     const existing = skillsMap.get(parsed.id);
                                     if (cand.isWorkspace && !existing.overridesGlobal) {
-                                        // Workspace version overrides global
                                         parsed.overridesGlobal = true;
                                         parsed.overriddenPath = existing.filePath;
                                         skillsMap.set(parsed.id, parsed);
@@ -251,6 +268,8 @@ export class SkillScanner {
         const tools = Array.from(toolCountMap.entries())
             .map(([tool, count]) => ({ tool, count }))
             .sort((a, b) => b.count - a.count);
+        const manualSlashCount = skills.filter((s) => s.isManualSlashCommand).length;
+        const autoReferenceCount = skills.length - manualSlashCount;
         const harnesses = Array.from(harnessStatsMap.values()).filter((h) => h.count > 0);
         const scanDurationMs = Math.round(performance.now() - startTime);
         return {
@@ -260,6 +279,8 @@ export class SkillScanner {
             tools,
             harnesses,
             totalSkills: skills.length,
+            manualSlashCount,
+            autoReferenceCount,
             overriddenCount,
             scannedLocations,
             scanDurationMs,
