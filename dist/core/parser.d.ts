@@ -12,6 +12,7 @@ export declare class SkillParser {
     private static extractTriggers;
     private static extractPrompts;
     private static extractWorkflowSnippets;
+    private static detectToolsAndMcp;
     private static scanAssets;
     private static calculateStats;
     private static getFileMtime;

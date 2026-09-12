@@ -9,9 +9,9 @@
 [![Zero Telemetry](https://img.shields.io/badge/Telemetry-Zero%20(100%25%20Local)-purple.svg)](SECURITY.md)
 
 **Universal AI Agent Skills Explorer, Search Catalog & Interactive Web Dashboard.**  
-*Instantly discover, categorize, inspect, and generate prompts for all your agent skills across Antigravity, Claude Code, Cursor, Codex, Cline, and custom harnesses.*
+*Instantly discover, categorize, inspect, lint, and generate prompts for all your agent skills across Antigravity, Claude Code, Cursor, Codex, Cline, and custom harnesses.*
 
-[Quickstart](#-quickstart) • [Features](#-key-features) • [Harness Support](#-universal-harness-support) • [CLI Commands](#-cli-usage--cheatsheet) • [Web UI Guide](#-interactive-web-dashboard) • [Static Export](#-static-export--github-pages) • [Security](#-production-security--privacy) • [TypeScript SDK](#-programmatic-sdk)
+[Quickstart](#-quickstart) • [Features](#-key-features) • [Harness Support](#-universal-harness-support) • [CLI Commands](#-cli-usage--cheatsheet) • [Keyboard Shortcuts](#-keyboard-navigation-shortcuts) • [Web UI Guide](#-interactive-web-dashboard) • [Skill Linter](#-built-in-skill-linter--validator) • [Static Export](#-static-export--github-pages) • [Security](#-production-security--privacy)
 
 </div>
 
@@ -19,44 +19,46 @@
 
 ## 🚀 Quickstart
 
-Run directly with `npx` (no prior installation required):
+Run directly with `npx` (no installation required):
 
 ```bash
 npx @sriramdevops/agent-skills-catalog
 ```
 
 > ⚡ **What happens:**  
-> 1. Automatically scans your workspace and system for installed AI agent skills (`.agents/skills`, `~/.gemini/config/skills`, `~/.claude/skills`, `.cursor/skills`, etc.).
-> 2. Parses YAML frontmatter, triggers, instructions, and bundled scripts.
-> 3. Launches a lightning-fast local web dashboard and opens your browser at `http://127.0.0.1:4173`.
+> 1. Automatically scans your workspace and system for installed AI agent skills (`.agents/skills`, `~/.gemini/config/skills`, `~/.claude/skills`, `.cursor/skills`, `.codex/skills`).
+> 2. Parses YAML frontmatter, triggers, instructions, required MCP tools, and bundled scripts.
+> 3. Launches a lightning-fast local web dashboard and opens your browser at `http://127.0.0.1:4173` in **< 300ms**.
 
 ---
 
 ## ✨ Key Features
 
-- **🌐 Universal Multi-Harness Discovery**: Automatically detects skills across Antigravity / Gemini, Claude Code, Cursor, Codex / OpenAI, Cline, and standard workspace folders.
-- **🏷️ Intelligent Categorization & Taxonomy**: Auto-sorts skills into 10 structured domains (*Agent Ops, Testing & QA, Architecture & Backend, Frontend & Design, DevOps & Infra, Security & Compliance, AI & ML, Data & Databases, Workflow, and Docs*).
-- **🎯 "When to Use" & "How to Use" Extraction**: Surfaces triggers, conditions, slash commands, and execution instructions upfront.
-- **💡 Built-in AI Prompt Studio**: Generates one-click copyable prompts customized for your target agent (Claude Code, Antigravity, Cursor, OpenAI).
-- **⚡ Lightning-Fast Fuzzy Search**: Instant client-side search powered by Fuse.js across 500+ skills with zero UI latency.
-- **📊 Interactive Analytics Dashboard**: Visual charts of category distributions, token footprints, technology leaderboards, and asset metrics.
-- **🖥️ Dual Interface (Web + CLI)**: Use the web GUI or query skills directly in your terminal (`--table`, `--search`, `view <id>`).
-- **📦 Zero-Dependency Static Exporter**: Generate a standalone static HTML website ready for GitHub Pages, GitLab Pages, or documentation hosting.
+- **🌐 Universal Multi-Harness Discovery**: Automatically detects skills across Antigravity / Gemini, Claude Code, Cursor, Codex / OpenAI, Cline, and workspace folders.
+- **⭐ Bookmarking & Favorites**: Star your daily-driver skills and filter them instantly (persisted in local storage).
+- **⌨️ Power-User Keyboard Navigation**: Navigate with `j`/`k`, open with `Enter`, copy with `c`, star with `s`, and search with `/`.
+- **🔗 Slash Command Fast Copy**: Copy `/skill-id` directly to your clipboard with a single click.
+- **🔄 Workspace Override Detection**: Identifies when project-level skills override global skills with a clear badge.
+- **🛠️ Tools & MCP Server Filtering**: Automatically detects tool requirements (*Playwright, Context7 MCP, Exa Search, Docker, Git, Jira, Postgres, etc.*) and lets you filter by tool.
+- **🏷️ Intelligent Categorization**: Auto-sorts skills into 10 structured domains (*Agent Ops, Testing & QA, Architecture & Backend, Frontend & Design, DevOps & Infra, Security & Compliance, AI & ML, Data & Databases, Workflow, and Docs*).
+- **💡 Built-in AI Prompt Studio**: Generates customized prompts for any target agent (*Execute, Review, Plan, Diagnose*).
+- **🔍 Built-in Skill Linter & Health Check**: Run `npx @sriramdevops/agent-skills-catalog --lint` to validate frontmatter, missing triggers, broken symlinks, and oversized token footprints.
+- **📦 Zero-Dependency Static Exporter**: Export a standalone static HTML website ready for GitHub Pages or documentation hosting.
 - **🔒 Production-Grade Security**: Strict path traversal validation, read-only local execution, HTML sanitization, and zero telemetry.
 
 ---
 
-## 🔌 Universal Harness Support
+## ⌨️ Keyboard Navigation Shortcuts
 
-`agent-skills-catalog` works out-of-the-box with any agent setup:
-
-| Harness / Tool | Default Scanned Paths | Supported Formats |
-| :--- | :--- | :--- |
-| **Antigravity / Gemini** | `~/.gemini/config/skills`, `.agents/skills` | `SKILL.md`, YAML frontmatter, symlinks, bundled scripts |
-| **Claude Code** | `~/.claude/skills`, `.claude/skills` | `SKILL.md`, markdown workflows, custom triggers |
-| **Cursor / Cline** | `.cursor/skills`, `~/.cursor/skills`, `.cline/skills` | `SKILL.md`, rulebooks, project prompts |
-| **Codex / OpenAI** | `.codex/skills`, `~/.codex/skills` | `SKILL.md`, tool configs |
-| **Custom / Any Folder** | `./skills`, or `-d /path/to/my-skills` | Any directory containing `SKILL.md` or `.md` files |
+| Key | Action |
+| :--- | :--- |
+| <kbd>/</kbd> or <kbd>Cmd</kbd>+<kbd>K</kbd> | Focus global live search bar |
+| <kbd>j</kbd> or <kbd>↓</kbd> | Move selection to next skill card |
+| <kbd>k</kbd> or <kbd>↑</kbd> | Move selection to previous skill card |
+| <kbd>Enter</kbd> | Open detailed inspection modal for selected skill |
+| <kbd>c</kbd> | Copy AI execution prompt for selected skill |
+| <kbd>s</kbd> | Star / Unstar selected skill (toggle favorite) |
+| <kbd>Esc</kbd> | Close skill inspection modal |
 
 ---
 
@@ -65,80 +67,79 @@ npx @sriramdevops/agent-skills-catalog
 ### 1. Launch Interactive Web Dashboard
 ```bash
 # Default (opens browser at http://127.0.0.1:4173)
-npx agent-skills-catalog
+npx @sriramdevops/agent-skills-catalog
 
-# Specify custom port & host
-npx agent-skills-catalog --port 8080 --host 0.0.0.0
+# Custom port and host
+npx @sriramdevops/agent-skills-catalog --port 8080 --host 0.0.0.0
 
-# Scan custom skill directories
-npx agent-skills-catalog --dir ./my-custom-skills /opt/shared-skills
+# Add custom directories to scan
+npx @sriramdevops/agent-skills-catalog --dir ./custom-skills /opt/shared-skills
 ```
 
-### 2. Search Skills in Terminal
+### 2. Search & Filter in Terminal
 ```bash
-# Search by keyword, technology, or intent
-npx agent-skills-catalog --search react
+# Search by keyword or intent
+npx @sriramdevops/agent-skills-catalog --search react
 
 # Filter by category
-npx agent-skills-catalog --category agent-ops --table
+npx @sriramdevops/agent-skills-catalog --category security-compliance --table
 
-# List all discovered skills in tabular format
-npx agent-skills-catalog --table
+# Filter by tool or MCP server
+npx @sriramdevops/agent-skills-catalog --tool "Playwright" --table
+
+# Print formatted terminal table
+npx @sriramdevops/agent-skills-catalog --table
 ```
 
 ### 3. Inspect a Specific Skill
 ```bash
-# View full when-to-use, how-to-use, triggers, and stats
-npx agent-skills-catalog view react-patterns
-npx agent-skills-catalog view continuous-agent-loop
+npx @sriramdevops/agent-skills-catalog view react-patterns
+npx @sriramdevops/agent-skills-catalog view continuous-agent-loop
 ```
 
-### 4. Export JSON or Documentation
+### 4. Health Check & Linter
 ```bash
-# Dump full catalog as JSON (useful for CI/CD or scripts)
-npx agent-skills-catalog --json > catalog.json
+# Run validation on all skills
+npx @sriramdevops/agent-skills-catalog --lint
+```
 
-# Export standalone static website & Markdown documentation
-npx agent-skills-catalog --export ./public-docs
+### 5. Export Static Website & Documentation
+```bash
+# Export static web portal + Markdown doc + JSON schema
+npx @sriramdevops/agent-skills-catalog --export ./public-docs
+
+# Dump raw JSON to stdout (for CI/CD or jq scripts)
+npx @sriramdevops/agent-skills-catalog --json > skills.json
 ```
 
 ---
 
-## 🎛️ CLI Options Reference
+## 🔍 Built-in Skill Linter & Validator
 
-```text
-Usage: agent-skills-catalog [options] [command]
+Validate that all skills in your repository follow best practices:
 
-Options:
-  -p, --port <port>          Port to run the web viewer server on (default: 4173)
-  -H, --host <host>          Host to bind server to (default: 127.0.0.1)
-  -d, --dir <dirs...>        Additional directories to scan for skills
-  -w, --workspace <path>     Workspace root path (defaults to current working directory)
-  --no-open                  Do not automatically open the browser
-  -l, --list                 List all discovered skills in terminal
-  -t, --table                Print tabular view of skills in terminal
-  -s, --search <query>       Search skills in terminal
-  -c, --category <category>  Filter skills by category in terminal
-  --json                     Output full catalog JSON to stdout
-  -e, --export <outputDir>   Export standalone static website & documentation
-  -V, --version              Output the version number
-  -h, --help                 Display help for command
-
-Commands:
-  view <id>                  Show full details and instructions for a specific skill
+```bash
+npx @sriramdevops/agent-skills-catalog --lint
 ```
+
+Checks performed:
+- `MISSING_FRONTMATTER`: Ensures YAML frontmatter exists.
+- `MISSING_DESCRIPTION`: Checks for missing or overly short descriptions.
+- `MISSING_WHEN_TO_USE`: Verifies trigger criteria and use cases are clear.
+- `OVERSIZED_TOKEN_FOOTPRINT`: Warns if a skill exceeds 8,000 tokens to protect context budget.
+- `BROKEN_SYMLINK`: Verifies all symlinks point to existing target files.
 
 ---
 
 ## 🌐 Interactive Web Dashboard
 
-The web dashboard is designed for high-density exploration:
+The web dashboard provides:
 
-1. **Card Grid View**: Rich cards showing category pills, token footprints, when-to-use summaries, and one-click copy prompt buttons.
+1. **Card Grid View**: Visual cards with category badges, token footprints, when-to-use summaries, star button, and slash command copy buttons.
 2. **Matrix Data Table**: Fast sortable table for scanning hundreds of skills by name, tokens, category, or assets.
-3. **AI Prompt Studio**: Select an action intent (Execute, Review, Plan, Diagnose), customize your objective, and copy an optimized instruction prompt for your AI model.
+3. **AI Prompt Studio**: Select an action intent (*Execute, Review, Plan, Diagnose*), customize your objective, and copy an optimized instruction prompt.
 4. **Skill Detail Modal**:
-   - **Overview**: Formatted triggers, conditions, and slash commands.
+   - **Overview**: Formatted triggers, conditions, and required MCP tools.
    - **Markdown Reader**: Full `SKILL.md` rendered with syntax highlighting, alerts, and code block copy buttons.
    - **Asset Explorer**: Live viewer for bundled helper scripts (`scripts/*.sh`), reference guides, and schemas.
    - **Metadata**: File paths, symlink origins, token estimates, and raw YAML frontmatter.
@@ -146,84 +147,27 @@ The web dashboard is designed for high-density exploration:
 
 ---
 
-## 📦 Static Export & GitHub Pages
+## 🔄 Sequential CI/CD Pipeline
 
-You can compile a zero-dependency, self-contained documentation portal with:
+The repository includes a sequential GitHub Actions pipeline in `.github/workflows/ci-cd.yml`:
 
-```bash
-npx agent-skills-catalog --export ./docs
-```
-
-This generates:
-- `docs/index.html` — Full interactive web application with preloaded skills data (works on any static host or local `file://` URL).
-- `docs/CATALOG.md` — Complete Markdown catalog categorized by domain.
-- `docs/skills.json` — Structured JSON schema of all discovered skills.
-
-### Deploying to GitHub Pages via GitHub Actions
-
-Add `.github/workflows/deploy-skills.yml` to your repository:
-
-```yaml
-name: Deploy Skills Catalog to GitHub Pages
-
-on:
-  push:
-    branches: [main]
-
-permissions:
-  contents: read
-  pages: write
-  id-token: write
-
-jobs:
-  deploy:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
-        with:
-          node-version: 22.x
-      - run: npx agent-skills-catalog --export ./dist-pages
-      - uses: actions/upload-pages-artifact@v3
-        with:
-          path: './dist-pages'
-      - uses: actions/deploy-pages@v4
+```mermaid
+graph TD
+    A[1. Lint & Typecheck] -->|Passes| B[2. Automated Test Suite]
+    B -->|Passes| C[3. Production Build & Static Export]
+    C -->|On main push| D[4. Deploy to GitHub Pages]
+    C -->|On Release / Dispatch| E[5. Publish to NPM Registry]
 ```
 
 ---
 
 ## 🔒 Production Security & Privacy
 
-`agent-skills-catalog` is built following strict security best practices:
-
 - **🛡️ Strict Path Traversal Prevention**: Resolves canonical symlinks and verifies all file reads remain within registered skill boundaries (`SecurityGuard.isPathSafe`).
 - **📖 100% Read-Only Safety**: Does not modify, delete, or write files to your skill directories.
 - **🚫 Zero Telemetry**: Runs entirely local and offline. No tracking, analytics, or remote API calls.
 - **🧼 XSS Sanitization**: Markdown output is sanitized using `DOMPurify` before DOM rendering.
 - **🛡️ HTTP Security Headers**: Serves with `X-Frame-Options: DENY`, `X-Content-Type-Options: nosniff`, and secure CSP.
-
----
-
-## 🛠️ Programmatic SDK
-
-You can import `agent-skills-catalog` into your own Node.js or TypeScript tools:
-
-```typescript
-import { SkillScanner, SkillParser, Categorizer } from 'agent-skills-catalog';
-
-// Scan all skills
-const scanner = new SkillScanner();
-const catalog = await scanner.scan({
-  workspaceRoot: process.cwd(),
-  customDirs: ['/path/to/custom/skills']
-});
-
-console.log(`Discovered ${catalog.totalSkills} skills!`);
-
-for (const skill of catalog.skills) {
-  console.log(`- [${skill.category}] ${skill.title}: ${skill.whenToUse}`);
-}
-```
 
 ---
 
@@ -244,19 +188,6 @@ skills-catalog --table
 ```bash
 npm install --save-dev @sriramdevops/agent-skills-catalog
 ```
-
----
-
-## 🤝 Contributing
-
-Contributions, feature requests, and suggestions are welcome!
-
-1. Fork the repository: `https://github.com/sriramdevops/agent-skills-catalog`
-2. Create your feature branch: `git checkout -b feature/amazing-feature`
-3. Run tests: `npm test`
-4. Commit your changes: `git commit -m 'feat: add amazing feature'`
-5. Push to the branch: `git push origin feature/amazing-feature`
-6. Open a Pull Request
 
 ---
 

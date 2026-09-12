@@ -84,6 +84,8 @@ export class SkillParser {
       const workflowSnippets = this.extractWorkflowSnippets(content);
       const assets = this.scanAssets(skillDir);
       const stats = this.calculateStats(content, assets);
+      const detectedTools = this.detectToolsAndMcp(content, rawDescription);
+      const slashCommand = `/${id}`;
 
       return {
         id,
@@ -92,6 +94,7 @@ export class SkillParser {
         description: rawDescription,
         category: categoryObj.id,
         tags,
+        detectedTools,
         harness,
         harnessLabel,
         sourceDir,
@@ -104,6 +107,7 @@ export class SkillParser {
         triggers,
         prompts,
         workflowSnippets,
+        slashCommand,
         rawContent,
         frontmatter,
         assets,
@@ -263,6 +267,37 @@ export class SkillParser {
       }
     }
     return snippets.slice(0, 5);
+  }
+
+  private static detectToolsAndMcp(content: string, description: string): string[] {
+    const tools = new Set<string>();
+    const text = `${description} ${content}`.toLowerCase();
+
+    const KNOWN_TOOLS: { name: string; pattern: RegExp }[] = [
+      { name: 'Playwright', pattern: /playwright|browser_navigate|browser_click/i },
+      { name: 'Context7 MCP', pattern: /context7|query-docs|resolve-library/i },
+      { name: 'Exa Neural Search', pattern: /exa[-_]search|neural[-_]search/i },
+      { name: 'Docker', pattern: /docker|dockerfile|container/i },
+      { name: 'Kubernetes', pattern: /kubernetes|kubectl|k8s|helm/i },
+      { name: 'Git & GitOps', pattern: /git|worktree|github-ops|argo/i },
+      { name: 'Jira API', pattern: /jira|ticket[-_]tracking/i },
+      { name: 'PostgreSQL', pattern: /postgres|postgresql|psql/i },
+      { name: 'ClickHouse', pattern: /clickhouse/i },
+      { name: 'Redis', pattern: /redis/i },
+      { name: 'Vitest / Jest', pattern: /vitest|jest|testing-library/i },
+      { name: 'Pytest', pattern: /pytest/i },
+      { name: 'FastAPI', pattern: /fastapi|pydantic/i },
+      { name: 'Next.js', pattern: /next\.js|nextjs|turbopack/i },
+      { name: 'Bash / Shell', pattern: /bash|zsh|scripts\/.*\.sh/i }
+    ];
+
+    for (const tool of KNOWN_TOOLS) {
+      if (tool.pattern.test(text)) {
+        tools.add(tool.name);
+      }
+    }
+
+    return Array.from(tools);
   }
 
   private static scanAssets(dirPath: string): SkillAsset[] {

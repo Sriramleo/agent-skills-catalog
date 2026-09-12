@@ -137,6 +137,18 @@ export function createServer(options = {}) {
             res.status(500).json({ success: false, error: err.message });
         }
     });
+    // Linter endpoint
+    app.get('/api/lint', async (_req, res) => {
+        try {
+            const catalog = await getCatalog();
+            const { SkillLinter } = await import('../core/linter.js');
+            const lintSummary = SkillLinter.lintAll(catalog.skills);
+            res.json({ success: true, data: lintSummary });
+        }
+        catch (err) {
+            res.status(500).json({ success: false, error: err.message });
+        }
+    });
     // Static Client Hosting
     // Look for built client in ../client (dist/client or dist/src/client)
     const possibleClientPaths = [

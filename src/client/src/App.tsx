@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import Fuse from 'fuse.js';
 import { Skill, SkillCatalogResult, ViewMode } from './types';
 import { Navbar } from './components/Navbar';
@@ -14,7 +14,9 @@ import {
   Terminal,
   Zap,
   HelpCircle,
-  AlertCircle
+  AlertCircle,
+  Keyboard,
+  Star
 } from 'lucide-react';
 
 declare global {
@@ -22,6 +24,8 @@ declare global {
     __PRELOADED_CATALOG__?: SkillCatalogResult;
   }
 }
+
+const FAVORITES_STORAGE_KEY = 'agent_skills_favorites_v1';
 
 export function App() {
   const [catalog, setCatalog] = useState<SkillCatalogResult | null>(
@@ -35,13 +39,45 @@ export function App() {
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
   const [selectedHarness, setSelectedHarness] = useState<string | null>(null);
   const [selectedTag, setSelectedTag] = useState<string | null>(null);
+  const [selectedTool, setSelectedTool] = useState<string | null>(null);
+  const [showOnlyFavorites, setShowOnlyFavorites] = useState(false);
+  const [showOnlyOverridden, setShowOnlyOverridden] = useState(false);
   const [viewMode, setViewMode] = useState<ViewMode>('grid');
+
+  // Favorites (LocalStorage)
+  const [favorites, setFavorites] = useState<Set<string>>(() => {
+    try {
+      const saved = localStorage.getItem(FAVORITES_STORAGE_KEY);
+      return saved ? new Set(JSON.parse(saved)) : new Set();
+    } catch {
+      return new Set();
+    }
+  });
+
+  // Active item index for Keyboard Navigation (j / k / Enter)
+  const [activeIndex, setActiveIndex] = useState<number>(-1);
 
   // Modal State
   const [selectedSkill, setSelectedSkill] = useState<Skill | null>(null);
 
   // Toast Notification State
   const [toastMessage, setToastMessage] = useState<string | null>(null);
+
+  // Save favorites to LocalStorage
+  const toggleFavorite = useCallback((skillId: string) => {
+    setFavorites((prev) => {
+      const next = new Set(prev);
+      if (next.has(skillId)) {
+        next.delete(skillId);
+      } else {
+        next.add(skillId);
+      }
+      try {
+        localStorage.setItem(FAVORITES_STORAGE_KEY, JSON.stringify(Array.from(next)));
+      } catch {}
+      return next;
+    });
+  }, []);
 
   // Fetch Catalog from API
   const fetchCatalog = async (forceRefresh = false) => {
@@ -57,7 +93,6 @@ export function App() {
         throw new Error(json.error || 'Invalid catalog response');
       }
     } catch (err: any) {
-      // If running offline or static export without server, fallback to preloaded
       if (window.__PRELOADED_CATALOG__) {
         setCatalog(window.__PRELOADED_CATALOG__);
       } else {
@@ -81,6 +116,7 @@ export function App() {
     const catParam = params.get('category');
     const harnessParam = params.get('harness');
     const tagParam = params.get('tag');
+    const toolParam = params.get('tool');
     const viewParam = params.get('view') as ViewMode;
     const skillParam = params.get('skill');
 
@@ -88,6 +124,7 @@ export function App() {
     if (catParam) setSelectedCategory(catParam);
     if (harnessParam) setSelectedHarness(harnessParam);
     if (tagParam) setSelectedTag(tagParam);
+    if (toolParam) setSelectedTool(toolParam);
     if (viewParam && ['grid', 'table', 'dashboard'].includes(viewParam)) setViewMode(viewParam);
 
     if (skillParam && catalog) {
@@ -103,12 +140,13 @@ export function App() {
     if (selectedCategory) params.set('category', selectedCategory);
     if (selectedHarness) params.set('harness', selectedHarness);
     if (selectedTag) params.set('tag', selectedTag);
+    if (selectedTool) params.set('tool', selectedTool);
     if (viewMode !== 'grid') params.set('view', viewMode);
     if (selectedSkill) params.set('skill', selectedSkill.id);
 
     const newUrl = `${window.location.pathname}${params.toString() ? '?' + params.toString() : ''}`;
     window.history.replaceState(null, '', newUrl);
-  }, [searchQuery, selectedCategory, selectedHarness, selectedTag, viewMode, selectedSkill]);
+  }, [searchQuery, selectedCategory, selectedHarness, selectedTag, selectedTool, viewMode, selectedSkill]);
 
   // Initialize Fuse.js for Instant Fuzzy Search
   const fuse = useMemo(() => {
@@ -118,6 +156,7 @@ export function App() {
         { name: 'id', weight: 0.4 },
         { name: 'title', weight: 0.3 },
         { name: 'tags', weight: 0.2 },
+        { name: 'detectedTools', weight: 0.2 },
         { name: 'description', weight: 0.15 },
         { name: 'whenToUse', weight: 0.1 }
       ],
@@ -151,8 +190,36 @@ export function App() {
       list = list.filter((s) => s.tags.includes(selectedTag.toLowerCase()));
     }
 
+    // 5. Tool / MCP Filter
+    if (selectedTool) {
+      list = list.filter((s) =>
+        s.detectedTools.some((t) => t.toLowerCase() === selectedTool.toLowerCase())
+      );
+    }
+
+    // 6. Starred Filter
+    if (showOnlyFavorites) {
+      list = list.filter((s) => favorites.has(s.id));
+    }
+
+    // 7. Overridden Filter
+    if (showOnlyOverridden) {
+      list = list.filter((s) => s.overridesGlobal);
+    }
+
     return list;
-  }, [catalog, searchQuery, selectedCategory, selectedHarness, selectedTag, fuse]);
+  }, [
+    catalog,
+    searchQuery,
+    selectedCategory,
+    selectedHarness,
+    selectedTag,
+    selectedTool,
+    showOnlyFavorites,
+    showOnlyOverridden,
+    favorites,
+    fuse
+  ]);
 
   const showToast = (msg: string) => {
     setToastMessage(msg);
@@ -164,10 +231,55 @@ export function App() {
     setSelectedCategory(null);
     setSelectedHarness(null);
     setSelectedTag(null);
+    setSelectedTool(null);
+    setShowOnlyFavorites(false);
+    setShowOnlyOverridden(false);
   };
 
+  // Keyboard navigation listeners (j / k / Enter / c / s)
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      // Ignore if inside an input, textarea, or select
+      const tag = (e.target as HTMLElement)?.tagName?.toLowerCase();
+      if (['input', 'textarea', 'select'].includes(tag)) return;
+
+      if (selectedSkill) return; // Modal is open, Esc handled in modal
+
+      if (e.key === 'j' || e.key === 'ArrowDown') {
+        e.preventDefault();
+        setActiveIndex((prev) => Math.min(prev + 1, filteredSkills.length - 1));
+      } else if (e.key === 'k' || e.key === 'ArrowUp') {
+        e.preventDefault();
+        setActiveIndex((prev) => Math.max(prev - 1, 0));
+      } else if (e.key === 'Enter' && activeIndex >= 0 && activeIndex < filteredSkills.length) {
+        e.preventDefault();
+        setSelectedSkill(filteredSkills[activeIndex]);
+      } else if (e.key === 'c' && activeIndex >= 0 && activeIndex < filteredSkills.length) {
+        e.preventDefault();
+        const activeSkill = filteredSkills[activeIndex];
+        const prompt = `Use the "${activeSkill.id}" skill to help me with this task.`;
+        navigator.clipboard.writeText(prompt);
+        showToast(`Copied prompt for ${activeSkill.title}`);
+      } else if (e.key === 's' && activeIndex >= 0 && activeIndex < filteredSkills.length) {
+        e.preventDefault();
+        const activeSkill = filteredSkills[activeIndex];
+        toggleFavorite(activeSkill.id);
+        showToast(favorites.has(activeSkill.id) ? `Unstarred ${activeSkill.title}` : `Starred ${activeSkill.title}`);
+      }
+    };
+
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [filteredSkills, activeIndex, selectedSkill, favorites, toggleFavorite]);
+
   const hasActiveFilters = Boolean(
-    searchQuery || selectedCategory || selectedHarness || selectedTag
+    searchQuery ||
+    selectedCategory ||
+    selectedHarness ||
+    selectedTag ||
+    selectedTool ||
+    showOnlyFavorites ||
+    showOnlyOverridden
   );
 
   return (
@@ -239,6 +351,15 @@ export function App() {
               tags={catalog.tags}
               selectedTag={selectedTag}
               onSelectTag={setSelectedTag}
+              tools={catalog.tools || []}
+              selectedTool={selectedTool}
+              onSelectTool={setSelectedTool}
+              favoritesCount={favorites.size}
+              showOnlyFavorites={showOnlyFavorites}
+              onToggleFavorites={() => setShowOnlyFavorites(!showOnlyFavorites)}
+              overriddenCount={catalog.overriddenCount}
+              showOnlyOverridden={showOnlyOverridden}
+              onToggleOverridden={() => setShowOnlyOverridden(!showOnlyOverridden)}
               totalSkills={catalog.totalSkills}
               onClearAll={handleClearAllFilters}
               hasActiveFilters={hasActiveFilters}
@@ -265,9 +386,20 @@ export function App() {
                         q: "{searchQuery}"
                       </span>
                     )}
+                    {showOnlyFavorites && (
+                      <span className="px-2 py-0.5 rounded-lg bg-amber-950/60 border border-amber-800/40 text-amber-300 flex items-center gap-1">
+                        <Star className="w-3 h-3 fill-amber-300" />
+                        Starred
+                      </span>
+                    )}
                     {selectedCategory && (
                       <span className="px-2 py-0.5 rounded-lg bg-indigo-950/60 border border-indigo-800/40 text-indigo-300 flex items-center gap-1">
                         cat: {selectedCategory}
+                      </span>
+                    )}
+                    {selectedTool && (
+                      <span className="px-2 py-0.5 rounded-lg bg-emerald-950/60 border border-emerald-800/40 text-emerald-300 flex items-center gap-1">
+                        tool: {selectedTool}
                       </span>
                     )}
                     {selectedHarness && (
@@ -303,12 +435,15 @@ export function App() {
                     </div>
                   ) : (
                     <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-5">
-                      {filteredSkills.map((skill) => (
+                      {filteredSkills.map((skill, idx) => (
                         <SkillCard
                           key={skill.id}
                           skill={skill}
                           onSelect={setSelectedSkill}
                           onCopyPrompt={(p) => showToast('AI Prompt copied to clipboard!')}
+                          isFavorite={favorites.has(skill.id)}
+                          onToggleFavorite={toggleFavorite}
+                          isActive={activeIndex === idx}
                         />
                       ))}
                     </div>
@@ -322,6 +457,9 @@ export function App() {
                   skills={filteredSkills}
                   onSelect={setSelectedSkill}
                   onCopyPrompt={(p) => showToast('AI Prompt copied to clipboard!')}
+                  favorites={favorites}
+                  onToggleFavorite={toggleFavorite}
+                  activeIndex={activeIndex}
                 />
               )}
 
@@ -346,12 +484,19 @@ export function App() {
 
       </main>
 
-      {/* Footer */}
+      {/* Footer with Keyboard Cheatsheet */}
       <footer className="w-full border-t border-slate-800/80 bg-slate-950 px-4 py-6 text-xs text-slate-500 text-center">
         <div className="max-w-7xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-3">
-          <p>
-            Universal AI Agent Skills Catalog • Works across Antigravity, Claude Code, Cursor, Codex, and custom harnesses.
-          </p>
+          <div className="flex items-center gap-3">
+            <span className="flex items-center gap-1 text-slate-400 font-mono text-[11px]">
+              <Keyboard className="w-3.5 h-3.5 text-cyan-400" />
+              <kbd className="px-1 py-0.2 bg-slate-900 rounded border border-slate-800">j</kbd>/<kbd className="px-1 py-0.2 bg-slate-900 rounded border border-slate-800">k</kbd> navigate
+              <kbd className="px-1 py-0.2 bg-slate-900 rounded border border-slate-800 ml-1">Enter</kbd> open
+              <kbd className="px-1 py-0.2 bg-slate-900 rounded border border-slate-800 ml-1">c</kbd> copy
+              <kbd className="px-1 py-0.2 bg-slate-900 rounded border border-slate-800 ml-1">s</kbd> star
+              <kbd className="px-1 py-0.2 bg-slate-900 rounded border border-slate-800 ml-1">/</kbd> search
+            </span>
+          </div>
           <div className="flex items-center gap-4 text-slate-400">
             <span>Production Safe (Read-Only)</span>
             <span>Zero Telemetry</span>
@@ -365,6 +510,8 @@ export function App() {
         skill={selectedSkill}
         onClose={() => setSelectedSkill(null)}
         onCopyPrompt={(p) => showToast('Copied to clipboard!')}
+        isFavorite={selectedSkill ? favorites.has(selectedSkill.id) : false}
+        onToggleFavorite={toggleFavorite}
       />
 
     </div>

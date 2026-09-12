@@ -1,7 +1,17 @@
 import React from 'react';
 import { CategoryIcon } from './CategoryIcon';
 import { SkillCategory, HarnessInfo } from '../types';
-import { Layers, Tag, X, Filter, Sparkles, Terminal } from 'lucide-react';
+import {
+  Layers,
+  Tag,
+  X,
+  Filter,
+  Star,
+  Wrench,
+  Terminal,
+  RotateCcw,
+  Sparkles
+} from 'lucide-react';
 
 interface SidebarProps {
   categories: SkillCategory[];
@@ -13,6 +23,15 @@ interface SidebarProps {
   tags: { tag: string; count: number }[];
   selectedTag: string | null;
   onSelectTag: (tag: string | null) => void;
+  tools: { tool: string; count: number }[];
+  selectedTool: string | null;
+  onSelectTool: (tool: string | null) => void;
+  favoritesCount: number;
+  showOnlyFavorites: boolean;
+  onToggleFavorites: () => void;
+  overriddenCount: number;
+  showOnlyOverridden: boolean;
+  onToggleOverridden: () => void;
   totalSkills: number;
   onClearAll: () => void;
   hasActiveFilters: boolean;
@@ -28,6 +47,15 @@ export const Sidebar: React.FC<SidebarProps> = ({
   tags,
   selectedTag,
   onSelectTag,
+  tools,
+  selectedTool,
+  onSelectTool,
+  favoritesCount,
+  showOnlyFavorites,
+  onToggleFavorites,
+  overriddenCount,
+  showOnlyOverridden,
+  onToggleOverridden,
   totalSkills,
   onClearAll,
   hasActiveFilters
@@ -48,6 +76,45 @@ export const Sidebar: React.FC<SidebarProps> = ({
           >
             <X className="w-3.5 h-3.5" />
             Reset all
+          </button>
+        )}
+      </div>
+
+      {/* Quick Toggles: Starred & Overrides */}
+      <div className="grid grid-cols-2 gap-2">
+        <button
+          onClick={onToggleFavorites}
+          className={`flex items-center justify-between px-3 py-2 rounded-xl text-xs font-medium border transition ${
+            showOnlyFavorites
+              ? 'bg-amber-500/20 text-amber-200 border-amber-500/50 shadow-sm'
+              : 'bg-slate-900/80 text-slate-300 border-slate-800 hover:border-slate-700'
+          }`}
+        >
+          <div className="flex items-center gap-1.5">
+            <Star className={`w-3.5 h-3.5 ${showOnlyFavorites ? 'fill-amber-400 text-amber-400' : 'text-amber-400'}`} />
+            <span>Starred</span>
+          </div>
+          <span className="text-[10px] font-mono px-1.5 py-0.5 rounded bg-slate-800 text-slate-400">
+            {favoritesCount}
+          </span>
+        </button>
+
+        {overriddenCount > 0 && (
+          <button
+            onClick={onToggleOverridden}
+            className={`flex items-center justify-between px-3 py-2 rounded-xl text-xs font-medium border transition ${
+              showOnlyOverridden
+                ? 'bg-cyan-500/20 text-cyan-200 border-cyan-500/50 shadow-sm'
+                : 'bg-slate-900/80 text-slate-300 border-slate-800 hover:border-slate-700'
+            }`}
+          >
+            <div className="flex items-center gap-1.5">
+              <RotateCcw className="w-3.5 h-3.5 text-cyan-400" />
+              <span>Overrides</span>
+            </div>
+            <span className="text-[10px] font-mono px-1.5 py-0.5 rounded bg-slate-800 text-slate-400">
+              {overriddenCount}
+            </span>
           </button>
         )}
       </div>
@@ -73,7 +140,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
             <span>All Categories</span>
           </div>
           <span className="px-2 py-0.5 rounded-md bg-slate-800 text-[11px] font-mono text-slate-400">
-            ${totalSkills}
+            {totalSkills}
           </span>
         </button>
 
@@ -105,6 +172,35 @@ export const Sidebar: React.FC<SidebarProps> = ({
           );
         })}
       </div>
+
+      {/* Tools & MCP Servers Section */}
+      {tools && tools.length > 0 && (
+        <div className="space-y-1.5 pt-4 border-t border-slate-800">
+          <div className="text-xs font-semibold text-slate-400 uppercase tracking-wider px-2 mb-2 flex items-center gap-1.5">
+            <Wrench className="w-3.5 h-3.5 text-emerald-400" />
+            <span>Tools & MCP Servers</span>
+          </div>
+          <div className="space-y-1">
+            {tools.slice(0, 8).map((t) => {
+              const isSelected = selectedTool === t.tool;
+              return (
+                <button
+                  key={t.tool}
+                  onClick={() => onSelectTool(isSelected ? null : t.tool)}
+                  className={`w-full flex items-center justify-between px-3 py-1.5 rounded-lg text-xs transition ${
+                    isSelected
+                      ? 'bg-emerald-600/30 text-emerald-200 border border-emerald-500/50'
+                      : 'text-slate-400 hover:bg-slate-900 hover:text-slate-200 border border-transparent'
+                  }`}
+                >
+                  <span className="truncate">{t.tool}</span>
+                  <span className="text-[11px] font-mono text-slate-500">{t.count}</span>
+                </button>
+              );
+            })}
+          </div>
+        </div>
+      )}
 
       {/* Harness Sources Section */}
       {harnesses.length > 0 && (
@@ -146,8 +242,8 @@ export const Sidebar: React.FC<SidebarProps> = ({
               Popular Tags
             </span>
           </div>
-          <div className="flex flex-wrap gap-1.5 px-1 max-h-48 overflow-y-auto pr-1">
-            {tags.slice(0, 24).map(({ tag, count }) => {
+          <div className="flex flex-wrap gap-1.5 px-1 max-h-40 overflow-y-auto pr-1">
+            {tags.slice(0, 20).map(({ tag, count }) => {
               const isSelected = selectedTag === tag;
               return (
                 <button

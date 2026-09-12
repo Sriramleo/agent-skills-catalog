@@ -88,10 +88,6 @@ export class SkillScanner {
     constructor() {
         this.securityGuard = new SecurityGuard();
     }
-    /**
-     * Scans for skills across all workspace and global harness paths.
-     * Traverses upwards from cwd to discover project root skill directories.
-     */
     async scan(options = {}) {
         const startTime = performance.now();
         const initialRoot = path.resolve(options.workspaceRoot || process.cwd());
@@ -99,8 +95,9 @@ export class SkillScanner {
         const skillsMap = new Map();
         const scannedLocations = [];
         const visitedRealPaths = new Set();
+        let overriddenCount = 0;
         const candidateDirs = [];
-        // 1. Gather all candidate directories (both workspace roots and global paths)
+        // 1. Gather all candidate directories
         for (const loc of KNOWN_HARNESS_LOCATIONS) {
             if (loc.isWorkspaceRelative && loc.subPath) {
                 for (const wsRoot of candidateWorkspaceRoots) {
@@ -111,7 +108,8 @@ export class SkillScanner {
                         label: loc.label,
                         name: loc.name,
                         icon: loc.icon,
-                        desc: loc.description
+                        desc: loc.description,
+                        isWorkspace: true
                     });
                 }
             }
@@ -123,11 +121,12 @@ export class SkillScanner {
                     label: loc.label,
                     name: loc.name,
                     icon: loc.icon,
-                    desc: loc.description
+                    desc: loc.description,
+                    isWorkspace: false
                 });
             }
         }
-        // 2. Custom user-supplied directories
+        // Custom directories
         if (options.customDirs && options.customDirs.length > 0) {
             for (const custom of options.customDirs) {
                 const resolved = path.resolve(custom);
@@ -137,7 +136,8 @@ export class SkillScanner {
                     label: `Custom (${path.basename(resolved)})`,
                     name: path.basename(resolved),
                     icon: 'FolderPlus',
-                    desc: `Custom user directory: ${resolved}`
+                    desc: `Custom user directory: ${resolved}`,
+                    isWorkspace: false
                 });
             }
         }
@@ -173,8 +173,27 @@ export class SkillScanner {
                             this.securityGuard.addAllowedRoot(path.dirname(realPath));
                             const parsed = SkillParser.parseFile(skillFile, cand.harness, cand.label, cand.dir);
                             if (parsed) {
-                                skillsMap.set(parsed.id, parsed);
-                                countForHarness++;
+                                // Check if already registered from another scope (Override detection)
+                                if (skillsMap.has(parsed.id)) {
+                                    const existing = skillsMap.get(parsed.id);
+                                    if (cand.isWorkspace && !existing.overridesGlobal) {
+                                        // Workspace version overrides global
+                                        parsed.overridesGlobal = true;
+                                        parsed.overriddenPath = existing.filePath;
+                                        skillsMap.set(parsed.id, parsed);
+                                        overriddenCount++;
+                                    }
+                                    else {
+                                        existing.overriddenPath = parsed.filePath;
+                                    }
+                                }
+                                else {
+                                    if (cand.isWorkspace) {
+                                        parsed.overridesGlobal = false;
+                                    }
+                                    skillsMap.set(parsed.id, parsed);
+                                    countForHarness++;
+                                }
                             }
                         }
                         catch {
@@ -222,14 +241,26 @@ export class SkillScanner {
         const tags = Array.from(tagCountMap.entries())
             .map(([tag, count]) => ({ tag, count }))
             .sort((a, b) => b.count - a.count);
+        // Build tools & MCP stats
+        const toolCountMap = new Map();
+        for (const skill of skills) {
+            for (const tool of skill.detectedTools) {
+                toolCountMap.set(tool, (toolCountMap.get(tool) || 0) + 1);
+            }
+        }
+        const tools = Array.from(toolCountMap.entries())
+            .map(([tool, count]) => ({ tool, count }))
+            .sort((a, b) => b.count - a.count);
         const harnesses = Array.from(harnessStatsMap.values()).filter((h) => h.count > 0);
         const scanDurationMs = Math.round(performance.now() - startTime);
         return {
             skills,
             categories,
             tags,
+            tools,
             harnesses,
             totalSkills: skills.length,
+            overriddenCount,
             scannedLocations,
             scanDurationMs,
             generatedAt: new Date().toISOString()
@@ -238,18 +269,13 @@ export class SkillScanner {
     getSecurityGuard() {
         return this.securityGuard;
     }
-    /**
-     * Traverses upwards from starting directory to discover parent workspace roots (e.g. git roots)
-     */
     findCandidateWorkspaceRoots(startDir) {
         const roots = [startDir];
         let current = startDir;
-        // Up to 5 parent levels or until filesystem root
         for (let i = 0; i < 5; i++) {
             const parent = path.dirname(current);
             if (parent === current)
                 break;
-            // If parent has .git or .agents or skills, include it
             if (fs.existsSync(path.join(parent, '.git')) ||
                 fs.existsSync(path.join(parent, '.agents')) ||
                 fs.existsSync(path.join(parent, '.claude')) ||

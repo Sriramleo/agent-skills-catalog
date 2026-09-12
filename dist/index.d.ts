@@ -3,4 +3,5 @@ export * from './core/scanner.js';
 export * from './core/parser.js';
 export * from './core/categorizer.js';
 export * from './core/security.js';
+export * from './core/linter.js';
 //# sourceMappingURL=index.d.ts.map

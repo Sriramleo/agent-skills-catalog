@@ -2,6 +2,7 @@ import { Command } from 'commander';
 import open from 'open';
 import pc from 'picocolors';
 import { SkillScanner } from '../core/scanner.js';
+import { SkillLinter } from '../core/linter.js';
 import { createServer } from '../server/app.js';
 import { TerminalView } from './terminal-view.js';
 import { StaticExporter } from './exporter.js';
@@ -24,6 +25,8 @@ program
   .option('-t, --table', 'Print tabular view of skills in terminal')
   .option('-s, --search <query>', 'Search skills in terminal')
   .option('-c, --category <category>', 'Filter skills by category in terminal')
+  .option('--tool <toolName>', 'Filter skills by detected tool/MCP server in terminal')
+  .option('--lint', 'Run health and validation checks on all skills')
   .option('--json', 'Output full catalog JSON to stdout')
   .option('-e, --export <outputDir>', 'Export standalone static website & documentation to directory');
 
@@ -36,14 +39,25 @@ program.action(async (options) => {
 
   const scanner = new SkillScanner();
 
-  // Mode 1: Output JSON to stdout
+  // Mode 1: Lint All Skills
+  if (options.lint) {
+    const catalog = await scanner.scan(scanOptions);
+    const report = SkillLinter.lintAll(catalog.skills);
+    TerminalView.renderLintReport(report);
+    if (report.errorsCount > 0) {
+      process.exit(1);
+    }
+    return;
+  }
+
+  // Mode 2: Output JSON to stdout
   if (options.json) {
     const catalog = await scanner.scan(scanOptions);
     console.log(JSON.stringify(catalog, null, 2));
     return;
   }
 
-  // Mode 2: Static Export
+  // Mode 3: Static Export
   if (options.export) {
     TerminalView.renderBanner();
     console.log(pc.cyan(`⚡ Scanning skills for static export...`));
@@ -59,7 +73,7 @@ program.action(async (options) => {
     return;
   }
 
-  // Mode 3: Search in terminal
+  // Mode 4: Search in terminal
   if (options.search) {
     const catalog = await scanner.scan(scanOptions);
     const query = options.search.toLowerCase();
@@ -68,7 +82,8 @@ program.action(async (options) => {
         s.id.includes(query) ||
         s.title.toLowerCase().includes(query) ||
         s.description.toLowerCase().includes(query) ||
-        s.tags.some((t) => t.includes(query))
+        s.tags.some((t) => t.includes(query)) ||
+        s.detectedTools.some((t) => t.toLowerCase().includes(query))
     );
 
     TerminalView.renderBanner();
@@ -77,13 +92,19 @@ program.action(async (options) => {
     return;
   }
 
-  // Mode 4: List / Table / Category Filter in terminal
-  if (options.list || options.table || options.category) {
+  // Mode 5: List / Table / Category / Tool Filter in terminal
+  if (options.list || options.table || options.category || options.tool) {
     const catalog = await scanner.scan(scanOptions);
     let skills = catalog.skills;
 
     if (options.category) {
       skills = skills.filter((s) => s.category.toLowerCase() === options.category.toLowerCase());
+    }
+
+    if (options.tool) {
+      skills = skills.filter((s) =>
+        s.detectedTools.some((t) => t.toLowerCase() === options.tool.toLowerCase())
+      );
     }
 
     TerminalView.renderSummary(catalog);
@@ -129,7 +150,7 @@ program.action(async (options) => {
 program
   .command('view <id>')
   .description('Show full details and instructions for a specific skill')
-  .action(async (id, cmdOptions) => {
+  .action(async (id) => {
     const parentOpts = program.opts();
     const scanner = new SkillScanner();
     const catalog = await scanner.scan({
@@ -147,6 +168,25 @@ program
     }
 
     TerminalView.renderSkillDetail(skill);
+  });
+
+// Lint command
+program
+  .command('lint')
+  .description('Run health and validation checks on all discovered skills')
+  .action(async () => {
+    const parentOpts = program.opts();
+    const scanner = new SkillScanner();
+    const catalog = await scanner.scan({
+      workspaceRoot: parentOpts.workspace || process.cwd(),
+      customDirs: parentOpts.dir || []
+    });
+
+    const report = SkillLinter.lintAll(catalog.skills);
+    TerminalView.renderLintReport(report);
+    if (report.errorsCount > 0) {
+      process.exit(1);
+    }
   });
 
 program.parse(process.argv);

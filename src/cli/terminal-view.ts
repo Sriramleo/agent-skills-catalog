@@ -1,5 +1,5 @@
 import pc from 'picocolors';
-import { Skill, SkillCatalogResult } from '../core/types.js';
+import { Skill, SkillCatalogResult, LintSummary } from '../core/types.js';
 
 export class TerminalView {
   public static renderBanner(version = '1.0.0'): void {
@@ -12,7 +12,9 @@ ${pc.dim('Universal AI Agent Skills Explorer & Browser')}
   public static renderSummary(catalog: SkillCatalogResult): void {
     this.renderBanner();
     console.log(
-      `${pc.bold('Total Skills:')} ${pc.green(catalog.totalSkills)}  ${pc.gray('|')}  ${pc.bold('Scan Time:')} ${pc.yellow(`${catalog.scanDurationMs}ms`)}`
+      `${pc.bold('Total Skills:')} ${pc.green(catalog.totalSkills)}  ${pc.gray('|')}  ${pc.bold('Scan Time:')} ${pc.yellow(`${catalog.scanDurationMs}ms`)} ${
+        catalog.overriddenCount > 0 ? ` ${pc.gray('|')} ${pc.bold('Workspace Overrides:')} ${pc.cyan(catalog.overriddenCount)}` : ''
+      }`
     );
 
     console.log(`\n${pc.bold(pc.underline('Harness Sources:'))}`);
@@ -29,13 +31,20 @@ ${pc.dim('Universal AI Agent Skills Explorer & Browser')}
         `  ${pc.magenta('●')} ${pc.bold(c.name.padEnd(30))} ${pc.yellow(String(c.count).padStart(3))} ${pc.dim(bar)}`
       );
     }
+
+    if (catalog.tools && catalog.tools.length > 0) {
+      console.log(`\n${pc.bold(pc.underline('Top Detected Tools & MCP Servers:'))}`);
+      const topTools = catalog.tools.slice(0, 6).map(t => `${pc.cyan(t.tool)} (${pc.yellow(t.count)})`).join(', ');
+      console.log(`  ${topTools}`);
+    }
+
     console.log('');
   }
 
   public static renderTable(skills: Skill[]): void {
     console.log(
       pc.bold(
-        `${'ID'.padEnd(30)} ${'CATEGORY'.padEnd(24)} ${'HARNESS'.padEnd(16)} ${'TOKENS'.padStart(8)}  ${'DESCRIPTION'}`
+        `${'ID'.padEnd(30)} ${'CATEGORY'.padEnd(24)} ${'HARNESS'.padEnd(14)} ${'TOKENS'.padStart(8)}  ${'DESCRIPTION'}`
       )
     );
     console.log(pc.gray('─'.repeat(120)));
@@ -43,7 +52,7 @@ ${pc.dim('Universal AI Agent Skills Explorer & Browser')}
     for (const s of skills) {
       const id = pc.cyan(s.id.slice(0, 29).padEnd(30));
       const cat = pc.yellow(s.category.slice(0, 23).padEnd(24));
-      const harness = pc.magenta(s.harness.slice(0, 15).padEnd(16));
+      const harness = pc.magenta(s.harness.slice(0, 13).padEnd(14));
       const tokens = pc.green(String(s.stats.tokenEstimate).padStart(8));
       const desc = pc.gray(s.description.slice(0, 40) + (s.description.length > 40 ? '...' : ''));
 
@@ -59,14 +68,18 @@ ${pc.dim('Universal AI Agent Skills Explorer & Browser')}
     console.log(`${pc.bold(pc.white(skill.title))} ${pc.gray(`(${skill.id})`)}`);
     console.log(`${pc.cyan(pc.bold('══════════════════════════════════════════════════════════════════════'))}`);
 
-    console.log(`\n${pc.bold('📁 Category:')}   ${pc.yellow(skill.category)}`);
-    console.log(`${pc.bold('🔌 Harness:')}    ${pc.magenta(skill.harnessLabel)} (${skill.harness})`);
-    console.log(`${pc.bold('📄 File Path:')}  ${pc.dim(skill.filePath)}`);
-    if (skill.isSymlink && skill.symlinkTarget) {
-      console.log(`${pc.bold('🔗 Symlink:')}    ${pc.dim(skill.symlinkTarget)}`);
+    console.log(`\n${pc.bold('📁 Category:')}      ${pc.yellow(skill.category)}`);
+    console.log(`${pc.bold('🔌 Harness:')}       ${pc.magenta(skill.harnessLabel)} (${skill.harness})`);
+    console.log(`${pc.bold('⚡ Slash Command:')} ${pc.cyan(pc.bold(skill.slashCommand))}`);
+    console.log(`${pc.bold('📄 File Path:')}     ${pc.dim(skill.filePath)}`);
+    if (skill.overridesGlobal) {
+      console.log(`${pc.bold('🔄 Override:')}      ${pc.cyan('Overrides global skill with workspace version')}`);
     }
-    console.log(`${pc.bold('🏷️  Tags:')}        ${skill.tags.map(t => pc.blue(`#${t}`)).join(' ') || pc.dim('none')}`);
-    console.log(`${pc.bold('📊 Stats:')}       ${skill.stats.lineCount} lines, ~${skill.stats.tokenEstimate} tokens, ${skill.assets.length} assets`);
+    if (skill.detectedTools.length > 0) {
+      console.log(`${pc.bold('🛠️  Tools / MCP:')}   ${skill.detectedTools.map(t => pc.green(t)).join(', ')}`);
+    }
+    console.log(`${pc.bold('🏷️  Tags:')}           ${skill.tags.map(t => pc.blue(`#${t}`)).join(' ') || pc.dim('none')}`);
+    console.log(`${pc.bold('📊 Stats:')}          ${skill.stats.lineCount} lines, ~${skill.stats.tokenEstimate} tokens, ${skill.assets.length} assets`);
 
     console.log(`\n${pc.bold(pc.underline('📌 DESCRIPTION:'))}`);
     console.log(pc.white(skill.description));
@@ -92,5 +105,41 @@ ${pc.dim('Universal AI Agent Skills Explorer & Browser')}
     }
 
     console.log('');
+  }
+
+  public static renderLintReport(report: LintSummary): void {
+    this.renderBanner();
+    console.log(pc.bold(pc.underline('🔍 SKILLS HEALTH & LINT REPORT\n')));
+
+    console.log(
+      `${pc.bold('Checked:')} ${pc.white(report.totalChecked)}  ${pc.gray('|')}  ${pc.bold('Errors:')} ${
+        report.errorsCount > 0 ? pc.red(pc.bold(report.errorsCount)) : pc.green(0)
+      }  ${pc.gray('|')}  ${pc.bold('Warnings:')} ${
+        report.warningsCount > 0 ? pc.yellow(report.warningsCount) : pc.green(0)
+      }  ${pc.gray('|')}  ${pc.bold('Passed Clean:')} ${pc.green(report.passedCount)}\n`
+    );
+
+    if (report.issues.length === 0) {
+      console.log(pc.green('🎉 All skills passed linting with zero issues!\n'));
+      return;
+    }
+
+    for (const item of report.issues) {
+      console.log(`${pc.bold(pc.cyan(`● ${item.skillTitle}`))} ${pc.gray(`(${item.skillId})`)}`);
+      for (const iss of item.issues) {
+        const badge =
+          iss.severity === 'error'
+            ? pc.bgRed(pc.white(' ERROR '))
+            : iss.severity === 'warning'
+            ? pc.bgYellow(pc.black(' WARN '))
+            : pc.bgCyan(pc.black(' INFO '));
+
+        console.log(`   ${badge} ${pc.white(iss.message)}`);
+        if (iss.suggestion) {
+          console.log(`          ${pc.dim(`↳ Suggestion: ${iss.suggestion}`)}`);
+        }
+      }
+      console.log('');
+    }
   }
 }

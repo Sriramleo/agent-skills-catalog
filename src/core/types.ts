@@ -23,6 +23,13 @@ export interface SkillStats {
   hasReferences: boolean;
 }
 
+export interface SkillLintIssue {
+  severity: 'error' | 'warning' | 'info';
+  code: string;
+  message: string;
+  suggestion?: string;
+}
+
 export interface Skill {
   id: string;
   name: string;
@@ -38,18 +45,28 @@ export interface Skill {
   isSymlink: boolean;
   symlinkTarget?: string;
   
+  // Override & Conflict Detection
+  overridesGlobal?: boolean;
+  isOverridden?: boolean;
+  overriddenPath?: string;
+
+  // Tool & MCP Detection
+  detectedTools: string[];
+  
   // Structured Content Breakdown
   whenToUse: string;
   howToUse: string;
   triggers: string[];
   prompts: string[];
   workflowSnippets: string[];
+  slashCommand: string;
   
   // Full details
   rawContent: string;
   frontmatter: Record<string, any>;
   assets: SkillAsset[];
   stats: SkillStats;
+  lintIssues?: SkillLintIssue[];
   
   version?: string;
   author?: string;
@@ -75,12 +92,22 @@ export interface HarnessInfo {
   detected: boolean;
 }
 
+export interface LintSummary {
+  totalChecked: number;
+  errorsCount: number;
+  warningsCount: number;
+  passedCount: number;
+  issues: { skillId: string; skillTitle: string; issues: SkillLintIssue[] }[];
+}
+
 export interface SkillCatalogResult {
   skills: Skill[];
   categories: SkillCategory[];
   tags: { tag: string; count: number }[];
+  tools: { tool: string; count: number }[];
   harnesses: HarnessInfo[];
   totalSkills: number;
+  overriddenCount: number;
   scannedLocations: string[];
   scanDurationMs: number;
   generatedAt: string;
