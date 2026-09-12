@@ -110,12 +110,15 @@ jobs:
         id: deployment
         uses: actions/deploy-pages@v4
 
-  # STEP 5: Publish Package to NPM (Runs sequentially on release publish)
+  # STEP 5: Publish Package to NPM (via NPM Trusted Publishers / OIDC)
   publish-npm:
-    name: 5. Publish to NPM Registry
+    name: 5. Publish to NPM Registry (Trusted Publisher)
     needs: [build-and-package]
     if: github.event_name == 'release' || github.event_name == 'workflow_dispatch'
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      id-token: write # Required for NPM Trusted Publishing (OIDC) & Provenance
     steps:
       - name: Checkout Code
         uses: actions/checkout@v4
@@ -132,7 +135,6 @@ jobs:
       - name: Build Package
         run: npm run build
 
-      - name: Publish to NPM with Provenance
+      - name: Publish to NPM via Trusted Publisher (OIDC)
         run: npm publish --provenance --access public
-        env:
-          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+
