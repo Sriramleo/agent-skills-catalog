@@ -2,7 +2,7 @@
 
 <div align="center">
 
-[![NPM Version](https://img.shields.io/npm/v/@sriramdevops/agent-skills-catalog?color=cyan&label=npm)](https://www.npmjs.com/package/@sriramdevops/agent-skills-catalog)
+[![NPM Version](https://img.shields.io/npm/v/@sriram8438/agent-skills-catalog?color=cyan&label=npm)](https://www.npmjs.com/package/@sriram8438/agent-skills-catalog)
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](https://opensource.org/licenses/MIT)
 [![Node.js](https://img.shields.io/badge/node-%3E%3D18.0.0-emerald.svg)](https://nodejs.org/)
 [![Security: Read--Only](https://img.shields.io/badge/Security-Strict%20Read--Only-green.svg)](SECURITY.md)
@@ -22,7 +22,7 @@
 Run directly with `npx` (no installation required):
 
 ```bash
-npx @sriramdevops/agent-skills-catalog
+npx @sriram8438/agent-skills-catalog
 ```
 
 > ⚡ **What happens:**  
@@ -42,7 +42,7 @@ npx @sriramdevops/agent-skills-catalog
 - **🛠️ Tools & MCP Server Filtering**: Automatically detects tool requirements (*Playwright, Context7 MCP, Exa Search, Docker, Git, Jira, Postgres, etc.*) and lets you filter by tool.
 - **🏷️ Intelligent Categorization**: Auto-sorts skills into 10 structured domains (*Agent Ops, Testing & QA, Architecture & Backend, Frontend & Design, DevOps & Infra, Security & Compliance, AI & ML, Data & Databases, Workflow, and Docs*).
 - **💡 Built-in AI Prompt Studio**: Generates customized prompts for any target agent (*Execute, Review, Plan, Diagnose*).
-- **🔍 Built-in Skill Linter & Health Check**: Run `npx @sriramdevops/agent-skills-catalog --lint` to validate frontmatter, missing triggers, broken symlinks, and oversized token footprints.
+- **🔍 Built-in Skill Linter & Health Check**: Run `npx @sriram8438/agent-skills-catalog --lint` to validate frontmatter, missing triggers, broken symlinks, and oversized token footprints.
 - **📦 Zero-Dependency Static Exporter**: Export a standalone static HTML website ready for GitHub Pages or documentation hosting.
 - **🔒 Production-Grade Security**: Strict path traversal validation, read-only local execution, HTML sanitization, and zero telemetry.
 
@@ -67,49 +67,49 @@ npx @sriramdevops/agent-skills-catalog
 ### 1. Launch Interactive Web Dashboard
 ```bash
 # Default (opens browser at http://127.0.0.1:4173)
-npx @sriramdevops/agent-skills-catalog
+npx @sriram8438/agent-skills-catalog
 
 # Custom port and host
-npx @sriramdevops/agent-skills-catalog --port 8080 --host 0.0.0.0
+npx @sriram8438/agent-skills-catalog --port 8080 --host 0.0.0.0
 
 # Add custom directories to scan
-npx @sriramdevops/agent-skills-catalog --dir ./custom-skills /opt/shared-skills
+npx @sriram8438/agent-skills-catalog --dir ./custom-skills /opt/shared-skills
 ```
 
 ### 2. Search & Filter in Terminal
 ```bash
 # Search by keyword or intent
-npx @sriramdevops/agent-skills-catalog --search react
+npx @sriram8438/agent-skills-catalog --search react
 
 # Filter by category
-npx @sriramdevops/agent-skills-catalog --category security-compliance --table
+npx @sriram8438/agent-skills-catalog --category security-compliance --table
 
 # Filter by tool or MCP server
-npx @sriramdevops/agent-skills-catalog --tool "Playwright" --table
+npx @sriram8438/agent-skills-catalog --tool "Playwright" --table
 
 # Print formatted terminal table
-npx @sriramdevops/agent-skills-catalog --table
+npx @sriram8438/agent-skills-catalog --table
 ```
 
 ### 3. Inspect a Specific Skill
 ```bash
-npx @sriramdevops/agent-skills-catalog view react-patterns
-npx @sriramdevops/agent-skills-catalog view continuous-agent-loop
+npx @sriram8438/agent-skills-catalog view react-patterns
+npx @sriram8438/agent-skills-catalog view continuous-agent-loop
 ```
 
 ### 4. Health Check & Linter
 ```bash
 # Run validation on all skills
-npx @sriramdevops/agent-skills-catalog --lint
+npx @sriram8438/agent-skills-catalog --lint
 ```
 
 ### 5. Export Static Website & Documentation
 ```bash
 # Export static web portal + Markdown doc + JSON schema
-npx @sriramdevops/agent-skills-catalog --export ./public-docs
+npx @sriram8438/agent-skills-catalog --export ./public-docs
 
 # Dump raw JSON to stdout (for CI/CD or jq scripts)
-npx @sriramdevops/agent-skills-catalog --json > skills.json
+npx @sriram8438/agent-skills-catalog --json > skills.json
 ```
 
 ---
@@ -119,7 +119,7 @@ npx @sriramdevops/agent-skills-catalog --json > skills.json
 Validate that all skills in your repository follow best practices:
 
 ```bash
-npx @sriramdevops/agent-skills-catalog --lint
+npx @sriram8438/agent-skills-catalog --lint
 ```
 
 Checks performed:
@@ -175,18 +175,18 @@ graph TD
 
 ### 1. Zero-Install with `npx` (Recommended)
 ```bash
-npx @sriramdevops/agent-skills-catalog
+npx @sriram8438/agent-skills-catalog
 ```
 
 ### 2. Global Installation
 ```bash
-npm install -g @sriramdevops/agent-skills-catalog
+npm install -g @sriram8438/agent-skills-catalog
 skills-catalog --table
 ```
 
 ### 3. Project Dependency
 ```bash
-npm install --save-dev @sriramdevops/agent-skills-catalog
+npm install --save-dev @sriram8438/agent-skills-catalog
 ```
 
 ---
