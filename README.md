@@ -3,23 +3,37 @@
 <div align="center">
 
 [![NPM Version](https://img.shields.io/npm/v/@sriram8438/agent-skills-catalog?color=cyan&label=npm)](https://www.npmjs.com/package/@sriram8438/agent-skills-catalog)
-[![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](https://opensource.org/licenses/MIT)
+[![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
+[![PRs Welcome](https://img.shields.io/badge/PRs-welcome-brightgreen.svg)](CONTRIBUTING.md)
 [![Node.js](https://img.shields.io/badge/node-%3E%3D18.0.0-emerald.svg)](https://nodejs.org/)
 [![Security: Read--Only](https://img.shields.io/badge/Security-Strict%20Read--Only-green.svg)](SECURITY.md)
 [![Zero Telemetry](https://img.shields.io/badge/Telemetry-Zero%20(100%25%20Local)-purple.svg)](SECURITY.md)
 
-**Universal AI Agent Skills Explorer, Search Catalog & Interactive Web Dashboard.**  
-*Instantly discover, categorize, inspect, lint, and generate prompts for all your agent skills across Antigravity, Claude Code, Cursor, Codex, Cline, and custom harnesses.*
+**A 100% Free & Open-Source Universal AI Agent Skills Explorer, Slash Command Catalog & Interactive Dashboard.**  
+*Discover, search, categorize, inspect, lint, and run agent skills across Antigravity, Claude Code, Cursor, Codex, Cline, and custom harnesses.*
 
-[Quickstart](#-quickstart) • [Features](#-key-features) • [Harness Support](#-universal-harness-support) • [CLI Commands](#-cli-usage--cheatsheet) • [Keyboard Shortcuts](#-keyboard-navigation-shortcuts) • [Web UI Guide](#-interactive-web-dashboard) • [Skill Linter](#-built-in-skill-linter--validator) • [Static Export](#-static-export--github-pages) • [Security](#-production-security--privacy)
+[Quickstart](#-quickstart) • [Why Open Source?](#-why-agent-skills-catalog) • [Installation](#-installation-options) • [Manual Slash Commands](#-manual-slash-commands-vs-auto-reference) • [Features](#-key-features) • [CLI Cheatsheet](#-cli-usage--cheatsheet) • [Keyboard Shortcuts](#-keyboard-navigation-shortcuts) • [Skill Linter](#-built-in-skill-linter--validator) • [Contributing](#-contributing) • [Security](#-production-security--privacy)
 
 </div>
 
 ---
 
+## 🌟 Why Agent Skills Catalog?
+
+As AI coding harnesses multiply (**Google Antigravity**, **Claude Code**, **Cursor**, **OpenAI Codex**, **Cline**), developer skills and system prompt instructions get scattered across hidden directories (`.agents/skills`, `.agents/workflows`, `~/.gemini/config/skills`, `~/.claude/skills`, `.cursor/skills`).
+
+**Agent Skills Catalog** solves this problem by providing a single, unified, local-first open-source hub to:
+1. **🔍 Auto-Discover All Skills**: Automatically scan your workspace and global configurations without manual indexing.
+2. **⚡ Pick Manual Slash Commands (`/`)**: Easily pick and copy on-demand workflow commands (`/plan`, `/cost-report`, `/jira`, `/quality-gate`) versus auto-loaded reference guidelines (`react-patterns`, `hipaa-compliance`).
+3. **📊 Monitor Token Budgets**: See accurate LLM token estimates before loading heavyweight skills into your context window.
+4. **🔍 Lint & Health-Check**: Catch broken symlinks, missing frontmatter, and bloated prompt instructions before pushing.
+5. **🔒 Strict Security**: 100% read-only, offline, with path-traversal prevention and zero telemetry.
+
+---
+
 ## 🚀 Quickstart
 
-Run directly with `npx` (no installation required):
+Run directly without installing anything using `npx`:
 
 ```bash
 npx @sriram8438/agent-skills-catalog
@@ -32,6 +46,71 @@ npx @sriram8438/agent-skills-catalog
 
 ---
 
+## 📦 Installation Options
+
+### 1. Zero-Install with `npx` (Recommended)
+Run anytime on any machine:
+```bash
+npx @sriram8438/agent-skills-catalog
+```
+
+### 2. Global Installation
+Install globally as a CLI tool:
+```bash
+npm install -g @sriram8438/agent-skills-catalog
+
+# Then run anywhere:
+skills-catalog
+# or
+agent-skills-catalog --table
+```
+
+### 3. Project Developer Dependency
+Add to your project's `package.json` for team usage and CI/CD linting:
+```bash
+npm install --save-dev @sriram8438/agent-skills-catalog
+```
+Add to your `package.json` scripts:
+```json
+{
+  "scripts": {
+    "skills": "skills-catalog",
+    "skills:lint": "skills-catalog --lint",
+    "skills:export": "skills-catalog --export ./docs/skills"
+  }
+}
+```
+
+### 4. Build from Source (For Contributors)
+```bash
+git clone https://github.com/sriram8438/agent-skills-catalog.git
+cd agent-skills-catalog
+npm install
+npm run build
+npm test
+node bin/cli.js
+```
+
+---
+
+## ⚡ Manual Slash Commands vs. Auto-Reference
+
+Not all agent skills are used the same way. The catalog automatically distinguishes between:
+
+| Type | Badge | Description | Examples |
+| :--- | :--- | :--- | :--- |
+| **Manual Slash Command** | `⚡ /command` | User-triggered commands you invoke explicitly in chat. Includes 1-click clipboard copy. | `/plan`, `/cost-report`, `/jira`, `/quality-gate`, `/checkpoint`, `/build-fix` |
+| **Auto-Loaded Reference** | `🤖 Auto` | Behavioral guidelines, coding standards, and domain patterns agents consult automatically. | `react-patterns`, `golang-patterns`, `security-review`, `hipaa-compliance` |
+
+In the Web UI header, use the **`All` | `⚡ Manual (/)` | `🤖 Auto-Loaded`** switcher to filter instantly.
+
+In the CLI, filter with:
+```bash
+npx @sriram8438/agent-skills-catalog --category slash-commands --table
+```
+
+---
+
 ## ✨ Key Features
 
 - **🌐 Universal Multi-Harness Discovery**: Automatically detects skills across Antigravity / Gemini, Claude Code, Cursor, Codex / OpenAI, Cline, and workspace folders.
@@ -40,9 +119,9 @@ npx @sriram8438/agent-skills-catalog
 - **🔗 Slash Command Fast Copy**: Copy `/skill-id` directly to your clipboard with a single click.
 - **🔄 Workspace Override Detection**: Identifies when project-level skills override global skills with a clear badge.
 - **🛠️ Tools & MCP Server Filtering**: Automatically detects tool requirements (*Playwright, Context7 MCP, Exa Search, Docker, Git, Jira, Postgres, etc.*) and lets you filter by tool.
-- **🏷️ Intelligent Categorization**: Auto-sorts skills into 10 structured domains (*Agent Ops, Testing & QA, Architecture & Backend, Frontend & Design, DevOps & Infra, Security & Compliance, AI & ML, Data & Databases, Workflow, and Docs*).
+- **🏷️ Intelligent Categorization**: Auto-sorts skills into structured domains (*Slash Commands, Agent Ops, Testing & QA, Architecture & Backend, Frontend & Design, DevOps & Infra, Security & Compliance, AI & ML, Data & Databases, Docs*).
 - **💡 Built-in AI Prompt Studio**: Generates customized prompts for any target agent (*Execute, Review, Plan, Diagnose*).
-- **🔍 Built-in Skill Linter & Health Check**: Run `npx @sriram8438/agent-skills-catalog --lint` to validate frontmatter, missing triggers, broken symlinks, and oversized token footprints.
+- **🔍 Built-in Skill Linter & Health Check**: Run `skills-catalog --lint` to validate frontmatter, missing triggers, broken symlinks, and oversized token footprints.
 - **📦 Zero-Dependency Static Exporter**: Export a standalone static HTML website ready for GitHub Pages or documentation hosting.
 - **🔒 Production-Grade Security**: Strict path traversal validation, read-only local execution, HTML sanitization, and zero telemetry.
 
@@ -80,6 +159,9 @@ npx @sriram8438/agent-skills-catalog --dir ./custom-skills /opt/shared-skills
 ```bash
 # Search by keyword or intent
 npx @sriram8438/agent-skills-catalog --search react
+
+# View all manual slash commands
+npx @sriram8438/agent-skills-catalog --category slash-commands --table
 
 # Filter by category
 npx @sriram8438/agent-skills-catalog --category security-compliance --table
@@ -171,26 +253,28 @@ graph TD
 
 ---
 
-## 📦 Installation Options
+## 🤝 Contributing
 
-### 1. Zero-Install with `npx` (Recommended)
-```bash
-npx @sriram8438/agent-skills-catalog
-```
+We welcome open-source contributions from the community!
 
-### 2. Global Installation
-```bash
-npm install -g @sriram8438/agent-skills-catalog
-skills-catalog --table
-```
-
-### 3. Project Dependency
-```bash
-npm install --save-dev @sriram8438/agent-skills-catalog
-```
+1. **Fork the repository** on GitHub.
+2. **Clone your fork** locally:
+   ```bash
+   git clone https://github.com/sriram8438/agent-skills-catalog.git
+   ```
+3. **Create a feature branch**:
+   ```bash
+   git checkout -b feat/my-new-feature
+   ```
+4. **Make your changes** and verify tests pass:
+   ```bash
+   npm run build
+   npm test
+   ```
+5. **Submit a Pull Request**! Check out [CONTRIBUTING.md](CONTRIBUTING.md) for full development guidelines.
 
 ---
 
 ## 📄 License
 
-Distributed under the **MIT License**. See [`LICENSE`](LICENSE) for more information.
+Distributed under the **MIT License**. See [`LICENSE`](LICENSE) for complete terms. Built with ❤️ for the open-source AI agent community.
