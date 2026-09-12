@@ -1,0 +1,5 @@
+node_modules
+dist-static
+dist-pages
+.DS_Store
+*.log

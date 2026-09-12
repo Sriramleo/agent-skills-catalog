@@ -1,0 +1,1 @@
+{"version":3,"file":"terminal-view.d.ts","sourceRoot":"","sources":["../../src/cli/terminal-view.ts"],"names":[],"mappings":"AACA,OAAO,EAAE,KAAK,EAAE,kBAAkB,EAAE,MAAM,kBAAkB,CAAC;AAE7D,qBAAa,YAAY;WACT,YAAY,CAAC,OAAO,SAAU,GAAG,IAAI;WAOrC,aAAa,CAAC,OAAO,EAAE,kBAAkB,GAAG,IAAI;WAuBhD,WAAW,CAAC,MAAM,EAAE,KAAK,EAAE,GAAG,IAAI;WAsBlC,iBAAiB,CAAC,KAAK,EAAE,KAAK,GAAG,IAAI;CAuCpD"}

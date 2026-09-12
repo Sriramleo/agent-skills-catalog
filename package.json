@@ -1,0 +1,88 @@
+{
+  "name": "@sriramdevops/agent-skills-catalog",
+  "version": "1.0.0",
+  "type": "module",
+  "description": "Universal AI agent skills explorer, catalog & interactive web viewer. Discover, search, categorize, and inspect skills across Antigravity, Claude Code, Cursor, Codex, and custom harnesses.",
+  "keywords": [
+    "ai-agent",
+    "agent-skills",
+    "skills-catalog",
+    "claude-code",
+    "antigravity",
+    "gemini-agent",
+    "cursor-skills",
+    "codex",
+    "skills-viewer",
+    "cli"
+  ],
+  "author": "Sriram",
+  "license": "MIT",
+  "homepage": "https://github.com/sriramdevops/agent-skills-catalog#readme",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/sriramdevops/agent-skills-catalog.git"
+  },
+  "bugs": {
+    "url": "https://github.com/sriramdevops/agent-skills-catalog/issues"
+  },
+  "publishConfig": {
+    "access": "public"
+  },
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "bin": {
+    "agent-skills-catalog": "./bin/cli.js",
+    "skills-catalog": "./bin/cli.js",
+    "skill-viewer": "./bin/cli.js",
+    "skills": "./bin/cli.js"
+  },
+  "files": [
+    "bin",
+    "dist",
+    "README.md",
+    "LICENSE",
+    "SECURITY.md"
+  ],
+  "scripts": {
+    "dev": "tsx src/cli/index.ts",
+    "build:client": "vite build --config src/client/vite.config.ts",
+    "build:server": "tsc -p tsconfig.server.json",
+    "build": "npm run build:client && npm run build:server",
+    "start": "node bin/cli.js",
+    "test": "vitest run",
+    "prepublishOnly": "npm run build"
+  },
+  "dependencies": {
+    "commander": "^13.1.0",
+    "express": "^4.21.2",
+    "js-yaml": "^4.1.0",
+    "open": "^10.1.0",
+    "picocolors": "^1.1.1"
+  },
+  "devDependencies": {
+    "@types/express": "^5.0.0",
+    "@types/js-yaml": "^4.0.9",
+    "@types/node": "^22.13.9",
+    "@types/react": "^18.3.18",
+    "@types/react-dom": "^18.3.5",
+    "@vitejs/plugin-react": "^4.3.4",
+    "autoprefixer": "^10.4.20",
+    "clsx": "^2.1.1",
+    "dompurify": "^3.2.4",
+    "fuse.js": "^7.1.0",
+    "lucide-react": "^1.16.0",
+    "marked": "^15.0.7",
+    "postcss": "^8.5.3",
+    "react": "^18.3.1",
+    "react-dom": "^18.3.1",
+    "tailwind-merge": "^3.0.2",
+    "tailwindcss": "^3.4.17",
+    "tsx": "^4.19.3",
+    "typescript": "^5.8.2",
+    "vite": "^6.2.0",
+    "vitest": "^3.0.7"
+  },
+  "engines": {
+    "node": ">=18.0.0"
+  }
+}
