@@ -1,5 +1,5 @@
 {
-  "name": "@sriram8438/agent-skills-catalog",
+  "name": "@sriramleo/agent-skills-catalog",
   "version": "1.0.0",
   "type": "module",
   "description": "Universal AI agent skills explorer, catalog & interactive web viewer. Discover, search, categorize, and inspect skills across Antigravity, Claude Code, Cursor, Codex, and custom harnesses.",
@@ -17,13 +17,13 @@
   ],
   "author": "Sriram",
   "license": "MIT",
-  "homepage": "https://github.com/sriram8438/agent-skills-catalog#readme",
+  "homepage": "https://github.com/sriramleo/agent-skills-catalog#readme",
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/sriram8438/agent-skills-catalog.git"
+    "url": "git+https://github.com/sriramleo/agent-skills-catalog.git"
   },
   "bugs": {
-    "url": "https://github.com/sriram8438/agent-skills-catalog/issues"
+    "url": "https://github.com/sriramleo/agent-skills-catalog/issues"
   },
   "publishConfig": {
     "access": "public"

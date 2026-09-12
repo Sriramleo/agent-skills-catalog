@@ -14,7 +14,7 @@ Thank you for your interest in contributing to **Agent Skills Catalog**! We are 
 ### Step-by-Step
 1. **Fork and clone** the repository:
    ```bash
-   git clone https://github.com/sriram8438/agent-skills-catalog.git
+   git clone https://github.com/sriramleo/agent-skills-catalog.git
    cd agent-skills-catalog
    ```
 

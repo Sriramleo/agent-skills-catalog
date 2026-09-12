@@ -2,7 +2,7 @@
 
 <div align="center">
 
-[![NPM Version](https://img.shields.io/npm/v/@sriram8438/agent-skills-catalog?color=cyan&label=npm)](https://www.npmjs.com/package/@sriram8438/agent-skills-catalog)
+[![NPM Version](https://img.shields.io/npm/v/@sriramleo/agent-skills-catalog?color=cyan&label=npm)](https://www.npmjs.com/package/@sriramleo/agent-skills-catalog)
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
 [![PRs Welcome](https://img.shields.io/badge/PRs-welcome-brightgreen.svg)](CONTRIBUTING.md)
 [![Node.js](https://img.shields.io/badge/node-%3E%3D18.0.0-emerald.svg)](https://nodejs.org/)
@@ -36,7 +36,7 @@ As AI coding harnesses multiply (**Google Antigravity**, **Claude Code**, **Curs
 Run directly without installing anything using `npx`:
 
 ```bash
-npx @sriram8438/agent-skills-catalog
+npx @sriramleo/agent-skills-catalog
 ```
 
 > ⚡ **What happens:**  
@@ -51,13 +51,13 @@ npx @sriram8438/agent-skills-catalog
 ### 1. Zero-Install with `npx` (Recommended)
 Run anytime on any machine:
 ```bash
-npx @sriram8438/agent-skills-catalog
+npx @sriramleo/agent-skills-catalog
 ```
 
 ### 2. Global Installation
 Install globally as a CLI tool:
 ```bash
-npm install -g @sriram8438/agent-skills-catalog
+npm install -g @sriramleo/agent-skills-catalog
 
 # Then run anywhere:
 skills-catalog
@@ -68,7 +68,7 @@ agent-skills-catalog --table
 ### 3. Project Developer Dependency
 Add to your project's `package.json` for team usage and CI/CD linting:
 ```bash
-npm install --save-dev @sriram8438/agent-skills-catalog
+npm install --save-dev @sriramleo/agent-skills-catalog
 ```
 Add to your `package.json` scripts:
 ```json
@@ -83,7 +83,7 @@ Add to your `package.json` scripts:
 
 ### 4. Build from Source (For Contributors)
 ```bash
-git clone https://github.com/sriram8438/agent-skills-catalog.git
+git clone https://github.com/sriramleo/agent-skills-catalog.git
 cd agent-skills-catalog
 npm install
 npm run build
@@ -106,7 +106,7 @@ In the Web UI header, use the **`All` | `⚡ Manual (/)` | `🤖 Auto-Loaded`** 
 
 In the CLI, filter with:
 ```bash
-npx @sriram8438/agent-skills-catalog --category slash-commands --table
+npx @sriramleo/agent-skills-catalog --category slash-commands --table
 ```
 
 ---
@@ -146,52 +146,52 @@ npx @sriram8438/agent-skills-catalog --category slash-commands --table
 ### 1. Launch Interactive Web Dashboard
 ```bash
 # Default (opens browser at http://127.0.0.1:4173)
-npx @sriram8438/agent-skills-catalog
+npx @sriramleo/agent-skills-catalog
 
 # Custom port and host
-npx @sriram8438/agent-skills-catalog --port 8080 --host 0.0.0.0
+npx @sriramleo/agent-skills-catalog --port 8080 --host 0.0.0.0
 
 # Add custom directories to scan
-npx @sriram8438/agent-skills-catalog --dir ./custom-skills /opt/shared-skills
+npx @sriramleo/agent-skills-catalog --dir ./custom-skills /opt/shared-skills
 ```
 
 ### 2. Search & Filter in Terminal
 ```bash
 # Search by keyword or intent
-npx @sriram8438/agent-skills-catalog --search react
+npx @sriramleo/agent-skills-catalog --search react
 
 # View all manual slash commands
-npx @sriram8438/agent-skills-catalog --category slash-commands --table
+npx @sriramleo/agent-skills-catalog --category slash-commands --table
 
 # Filter by category
-npx @sriram8438/agent-skills-catalog --category security-compliance --table
+npx @sriramleo/agent-skills-catalog --category security-compliance --table
 
 # Filter by tool or MCP server
-npx @sriram8438/agent-skills-catalog --tool "Playwright" --table
+npx @sriramleo/agent-skills-catalog --tool "Playwright" --table
 
 # Print formatted terminal table
-npx @sriram8438/agent-skills-catalog --table
+npx @sriramleo/agent-skills-catalog --table
 ```
 
 ### 3. Inspect a Specific Skill
 ```bash
-npx @sriram8438/agent-skills-catalog view react-patterns
-npx @sriram8438/agent-skills-catalog view continuous-agent-loop
+npx @sriramleo/agent-skills-catalog view react-patterns
+npx @sriramleo/agent-skills-catalog view continuous-agent-loop
 ```
 
 ### 4. Health Check & Linter
 ```bash
 # Run validation on all skills
-npx @sriram8438/agent-skills-catalog --lint
+npx @sriramleo/agent-skills-catalog --lint
 ```
 
 ### 5. Export Static Website & Documentation
 ```bash
 # Export static web portal + Markdown doc + JSON schema
-npx @sriram8438/agent-skills-catalog --export ./public-docs
+npx @sriramleo/agent-skills-catalog --export ./public-docs
 
 # Dump raw JSON to stdout (for CI/CD or jq scripts)
-npx @sriram8438/agent-skills-catalog --json > skills.json
+npx @sriramleo/agent-skills-catalog --json > skills.json
 ```
 
 ---
@@ -201,7 +201,7 @@ npx @sriram8438/agent-skills-catalog --json > skills.json
 Validate that all skills in your repository follow best practices:
 
 ```bash
-npx @sriram8438/agent-skills-catalog --lint
+npx @sriramleo/agent-skills-catalog --lint
 ```
 
 Checks performed:
@@ -260,7 +260,7 @@ We welcome open-source contributions from the community!
 1. **Fork the repository** on GitHub.
 2. **Clone your fork** locally:
    ```bash
-   git clone https://github.com/sriram8438/agent-skills-catalog.git
+   git clone https://github.com/sriramleo/agent-skills-catalog.git
    ```
 3. **Create a feature branch**:
    ```bash
