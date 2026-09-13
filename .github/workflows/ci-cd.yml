@@ -90,7 +90,7 @@ jobs:
   publish-npm:
     name: 4. Publish to NPM Registry (Trusted Publisher)
     needs: [build-and-package]
-    if: github.event_name == 'release' || github.event_name == 'workflow_dispatch'
+    if: (github.event_name == 'push' && github.ref == 'refs/heads/main') || github.event_name == 'release' || github.event_name == 'workflow_dispatch'
     runs-on: ubuntu-latest
     permissions:
       contents: read
@@ -111,4 +111,15 @@ jobs:
         run: npm run build
 
       - name: Publish to NPM via Trusted Publisher (OIDC)
-        run: npm publish --provenance --access public
+        run: |
+          PACKAGE_NAME=$(node -p "require('./package.json').name")
+          CURRENT_VERSION=$(node -p "require('./package.json').version")
+          REMOTE_VERSION=$(npm view "${PACKAGE_NAME}@${CURRENT_VERSION}" version 2>/dev/null || true)
+          
+          if [ "$CURRENT_VERSION" = "$REMOTE_VERSION" ]; then
+            echo "ℹ️ Version ${CURRENT_VERSION} of ${PACKAGE_NAME} is already published on npm. Skipping publish."
+          else
+            echo "🚀 Publishing ${PACKAGE_NAME}@${CURRENT_VERSION} to npm registry..."
+            npm publish --provenance --access public
+            echo "✅ Successfully published ${PACKAGE_NAME}@${CURRENT_VERSION}!"
+          fi
