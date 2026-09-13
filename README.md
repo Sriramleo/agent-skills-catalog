@@ -235,10 +235,9 @@ The repository includes a sequential GitHub Actions pipeline in `.github/workflo
 
 ```mermaid
 graph TD
-    A[1. Lint & Typecheck] -->|Passes| B[2. Automated Test Suite]
-    B -->|Passes| C[3. Production Build & Static Export]
-    C -->|On main push| D[4. Deploy to GitHub Pages]
-    C -->|On Release / Dispatch| E[5. Publish to NPM Registry]
+    A[1. Lint & Typecheck] -->|Passes| B[2. Automated Test Suite Node 18, 20, 22]
+    B -->|Passes| C[3. Production Build & Package Validation]
+    C -->|On Release / Dispatch| D[4. Publish to NPM Registry via OIDC]
 ```
 
 ---

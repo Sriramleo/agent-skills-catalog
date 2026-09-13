@@ -11,7 +11,6 @@ on:
 
 permissions:
   contents: read
-  pages: write
   id-token: write
 
 concurrency:
@@ -63,9 +62,9 @@ jobs:
       - name: Run Vitest Unit Tests
         run: npm test
 
-  # STEP 3: Production Build & Static Site Export (Runs only AFTER Step 2 passes)
+  # STEP 3: Production Build & Validation (Runs only AFTER Step 2 passes)
   build-and-package:
-    name: 3. Production Build & Static Export
+    name: 3. Production Build & Package
     needs: [test-suite]
     runs-on: ubuntu-latest
     steps:
@@ -84,35 +83,12 @@ jobs:
       - name: Build Full Production Bundle
         run: npm run build
 
-      - name: Export Static Site
-        run: node bin/cli.js --export ./dist-pages
-
       - name: Test CLI Binary Execution
         run: node bin/cli.js --table || true
 
-      - name: Upload Static Pages Artifact
-        if: github.ref == 'refs/heads/main'
-        uses: actions/upload-pages-artifact@v3
-        with:
-          path: './dist-pages'
-
-  # STEP 4: Deploy to GitHub Pages (Runs only AFTER Step 3 passes on main branch)
-  deploy-pages:
-    name: 4. Deploy Demo to GitHub Pages
-    needs: [build-and-package]
-    if: github.ref == 'refs/heads/main'
-    runs-on: ubuntu-latest
-    environment:
-      name: github-pages
-      url: ${{ steps.deployment.outputs.page_url }}
-    steps:
-      - name: Deploy to GitHub Pages
-        id: deployment
-        uses: actions/deploy-pages@v4
-
-  # STEP 5: Publish Package to NPM (via NPM Trusted Publishers / OIDC)
+  # STEP 4: Publish Package to NPM (via NPM Trusted Publishers / OIDC)
   publish-npm:
-    name: 5. Publish to NPM Registry (Trusted Publisher)
+    name: 4. Publish to NPM Registry (Trusted Publisher)
     needs: [build-and-package]
     if: github.event_name == 'release' || github.event_name == 'workflow_dispatch'
     runs-on: ubuntu-latest
@@ -137,4 +113,3 @@ jobs:
 
       - name: Publish to NPM via Trusted Publisher (OIDC)
         run: npm publish --provenance --access public
-
