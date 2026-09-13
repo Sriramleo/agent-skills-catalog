@@ -112,3 +112,5 @@ export interface SkillCatalogResult {
 
 export type ViewMode = 'grid' | 'table' | 'dashboard';
 export type FilterInvocationMode = 'all' | 'slash' | 'auto';
+export type Theme = 'dark' | 'light';
+

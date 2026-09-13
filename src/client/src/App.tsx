@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import Fuse from 'fuse.js';
-import { Skill, SkillCatalogResult, ViewMode, FilterInvocationMode } from './types';
+import { Skill, SkillCatalogResult, ViewMode, FilterInvocationMode, Theme } from './types';
 import { Navbar } from './components/Navbar';
 import { Sidebar } from './components/Sidebar';
 import { SkillCard } from './components/SkillCard';
@@ -26,6 +26,7 @@ declare global {
 }
 
 const FAVORITES_STORAGE_KEY = 'agent_skills_favorites_v1';
+const THEME_STORAGE_KEY = 'agent_skills_theme_v1';
 
 export function App() {
   const [catalog, setCatalog] = useState<SkillCatalogResult | null>(
@@ -34,7 +35,37 @@ export function App() {
   const [isLoading, setIsLoading] = useState<boolean>(!window.__PRELOADED_CATALOG__);
   const [error, setError] = useState<string | null>(null);
 
-  // Filters State
+  // Theme State (Dark vs Light)
+  const [theme, setTheme] = useState<Theme>(() => {
+    try {
+      const saved = localStorage.getItem(THEME_STORAGE_KEY);
+      if (saved === 'light' || saved === 'dark') return saved;
+      return window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+    } catch {
+      return 'dark';
+    }
+  });
+
+  // Apply theme class to HTML root
+  useEffect(() => {
+    const root = document.documentElement;
+    if (theme === 'dark') {
+      root.classList.add('dark');
+      root.classList.remove('light');
+    } else {
+      root.classList.remove('dark');
+      root.classList.add('light');
+    }
+    try {
+      localStorage.setItem(THEME_STORAGE_KEY, theme);
+    } catch {}
+  }, [theme]);
+
+  const toggleTheme = useCallback(() => {
+    setTheme((prev) => (prev === 'dark' ? 'light' : 'dark'));
+  }, []);
+
+  // Filters State — Table view as default
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
   const [selectedHarness, setSelectedHarness] = useState<string | null>(null);
@@ -43,7 +74,7 @@ export function App() {
   const [invocationMode, setInvocationMode] = useState<FilterInvocationMode>('all');
   const [showOnlyFavorites, setShowOnlyFavorites] = useState(false);
   const [showOnlyOverridden, setShowOnlyOverridden] = useState(false);
-  const [viewMode, setViewMode] = useState<ViewMode>('grid');
+  const [viewMode, setViewMode] = useState<ViewMode>('table');
 
   // Favorites (LocalStorage)
   const [favorites, setFavorites] = useState<Set<string>>(() => {
@@ -142,7 +173,7 @@ export function App() {
     if (selectedHarness) params.set('harness', selectedHarness);
     if (selectedTag) params.set('tag', selectedTag);
     if (selectedTool) params.set('tool', selectedTool);
-    if (viewMode !== 'grid') params.set('view', viewMode);
+    if (viewMode !== 'table') params.set('view', viewMode);
     if (selectedSkill) params.set('skill', selectedSkill.id);
 
     const newUrl = `${window.location.pathname}${params.toString() ? '?' + params.toString() : ''}`;
@@ -249,38 +280,56 @@ export function App() {
   // Keyboard navigation listeners (j / k / Enter / c / s)
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
-      // Ignore if inside an input, textarea, or select
-      const tag = (e.target as HTMLElement)?.tagName?.toLowerCase();
-      if (['input', 'textarea', 'select'].includes(tag)) return;
+      // Don't trigger shortcuts if user is typing in an input or textarea
+      if (['INPUT', 'TEXTAREA', 'SELECT'].includes((e.target as HTMLElement).tagName)) {
+        return;
+      }
 
-      if (selectedSkill) return; // Modal is open, Esc handled in modal
+      if (filteredSkills.length === 0) return;
 
       if (e.key === 'j' || e.key === 'ArrowDown') {
         e.preventDefault();
-        setActiveIndex((prev) => Math.min(prev + 1, filteredSkills.length - 1));
+        setActiveIndex((prev) => {
+          const next = prev + 1 >= filteredSkills.length ? 0 : prev + 1;
+          return next;
+        });
       } else if (e.key === 'k' || e.key === 'ArrowUp') {
         e.preventDefault();
-        setActiveIndex((prev) => Math.max(prev - 1, 0));
-      } else if (e.key === 'Enter' && activeIndex >= 0 && activeIndex < filteredSkills.length) {
-        e.preventDefault();
-        setSelectedSkill(filteredSkills[activeIndex]);
-      } else if (e.key === 'c' && activeIndex >= 0 && activeIndex < filteredSkills.length) {
-        e.preventDefault();
-        const activeSkill = filteredSkills[activeIndex];
-        const prompt = `Use the "${activeSkill.id}" skill to help me with this task.`;
-        navigator.clipboard.writeText(prompt);
-        showToast(`Copied prompt for ${activeSkill.title}`);
-      } else if (e.key === 's' && activeIndex >= 0 && activeIndex < filteredSkills.length) {
-        e.preventDefault();
-        const activeSkill = filteredSkills[activeIndex];
-        toggleFavorite(activeSkill.id);
-        showToast(favorites.has(activeSkill.id) ? `Unstarred ${activeSkill.title}` : `Starred ${activeSkill.title}`);
+        setActiveIndex((prev) => {
+          const next = prev - 1 < 0 ? filteredSkills.length - 1 : prev - 1;
+          return next;
+        });
+      } else if (e.key === 'Enter') {
+        if (activeIndex >= 0 && activeIndex < filteredSkills.length) {
+          e.preventDefault();
+          setSelectedSkill(filteredSkills[activeIndex]);
+        }
+      } else if (e.key === 'c') {
+        if (activeIndex >= 0 && activeIndex < filteredSkills.length) {
+          e.preventDefault();
+          const target = filteredSkills[activeIndex];
+          const text = `Use the "${target.id}" skill to help me with this task.`;
+          navigator.clipboard.writeText(text);
+          showToast(`Prompt for "${target.id}" copied!`);
+        }
+      } else if (e.key === 's') {
+        if (activeIndex >= 0 && activeIndex < filteredSkills.length) {
+          e.preventDefault();
+          const target = filteredSkills[activeIndex];
+          toggleFavorite(target.id);
+          showToast(favorites.has(target.id) ? `Removed "${target.id}" from starred` : `Starred "${target.id}"!`);
+        }
       }
     };
 
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [filteredSkills, activeIndex, selectedSkill, favorites, toggleFavorite]);
+  }, [filteredSkills, activeIndex, favorites, toggleFavorite]);
+
+  // Reset active keyboard index when search/filters change
+  useEffect(() => {
+    setActiveIndex(-1);
+  }, [searchQuery, selectedCategory, selectedHarness, selectedTag, selectedTool, invocationMode]);
 
   const hasActiveFilters = Boolean(
     searchQuery ||
@@ -293,7 +342,7 @@ export function App() {
   );
 
   return (
-    <div className="min-h-screen bg-slate-950 text-slate-100 flex flex-col selection:bg-cyan-500/30 selection:text-cyan-200">
+    <div className="min-h-screen bg-slate-100 dark:bg-slate-950 text-slate-800 dark:text-slate-100 flex flex-col selection:bg-indigo-500 selection:text-white dark:selection:bg-cyan-500/30 dark:selection:text-cyan-200 transition-colors duration-200">
       
       {/* Toast Notification */}
       {toastMessage && (
@@ -311,6 +360,8 @@ export function App() {
         onViewModeChange={setViewMode}
         invocationMode={invocationMode}
         onInvocationModeChange={setInvocationMode}
+        theme={theme}
+        onToggleTheme={toggleTheme}
         catalog={catalog}
         isLoading={isLoading}
         onRefresh={() => fetchCatalog(true)}
@@ -322,14 +373,14 @@ export function App() {
         
         {/* Error Notification */}
         {error && (
-          <div className="mb-6 p-4 rounded-2xl bg-rose-950/40 border border-rose-800/80 text-rose-300 text-xs flex items-center justify-between">
+          <div className="mb-6 p-4 rounded-2xl bg-rose-50 dark:bg-rose-950/40 border border-rose-200 dark:border-rose-800/80 text-rose-700 dark:text-rose-300 text-xs flex items-center justify-between">
             <div className="flex items-center gap-2">
-              <AlertCircle className="w-4 h-4 text-rose-400" />
+              <AlertCircle className="w-4 h-4 text-rose-500 dark:text-rose-400" />
               <span>{error}</span>
             </div>
             <button
               onClick={() => fetchCatalog(true)}
-              className="px-3 py-1 bg-rose-900/60 hover:bg-rose-900 rounded-lg text-rose-200 font-medium"
+              className="px-3 py-1 bg-rose-100 hover:bg-rose-200 dark:bg-rose-900/60 dark:hover:bg-rose-900 rounded-lg text-rose-800 dark:text-rose-200 font-medium transition"
             >
               Retry
             </button>
@@ -340,9 +391,9 @@ export function App() {
         {isLoading && !catalog && (
           <div className="flex-1 flex flex-col items-center justify-center py-20 space-y-4">
             <div className="w-12 h-12 rounded-2xl bg-gradient-to-tr from-cyan-500 to-indigo-500 animate-spin p-1 flex items-center justify-center">
-              <div className="w-full h-full bg-slate-950 rounded-[14px]" />
+              <div className="w-full h-full bg-white dark:bg-slate-950 rounded-[14px]" />
             </div>
-            <p className="text-sm text-slate-400 font-medium animate-pulse">
+            <p className="text-sm text-slate-600 dark:text-slate-400 font-medium animate-pulse">
               Scanning agent skills across all harnesses...
             </p>
           </div>
@@ -381,12 +432,12 @@ export function App() {
             <div className="flex-1 w-full space-y-6">
               
               {/* Active Filter Pills & Results Counter */}
-              <div className="flex flex-wrap items-center justify-between gap-3 pb-3 border-b border-slate-800/80">
+              <div className="flex flex-wrap items-center justify-between gap-3 pb-3 border-b border-slate-200 dark:border-slate-800/80">
                 <div className="flex items-center gap-2">
-                  <span className="text-sm font-semibold text-white">
+                  <span className="text-sm font-semibold text-slate-900 dark:text-white">
                     {viewMode === 'dashboard' ? 'Catalog Intelligence & Analytics' : 'Skills Directory'}
                   </span>
-                  <span className="text-xs px-2.5 py-0.5 rounded-full bg-slate-900 border border-slate-800 text-cyan-400 font-mono font-medium">
+                  <span className="text-xs px-2.5 py-0.5 rounded-full bg-slate-200 dark:bg-slate-900 border border-slate-300 dark:border-slate-800 text-indigo-700 dark:text-cyan-400 font-mono font-medium">
                     {filteredSkills.length} of {catalog.totalSkills}
                   </span>
                 </div>
@@ -394,33 +445,33 @@ export function App() {
                 {hasActiveFilters && (
                   <div className="flex flex-wrap items-center gap-1.5 text-xs">
                     {searchQuery && (
-                      <span className="px-2 py-0.5 rounded-lg bg-cyan-950/60 border border-cyan-800/40 text-cyan-300 flex items-center gap-1 font-mono">
+                      <span className="px-2 py-0.5 rounded-lg bg-cyan-100 dark:bg-cyan-950/60 border border-cyan-300 dark:border-cyan-800/40 text-cyan-800 dark:text-cyan-300 flex items-center gap-1 font-mono">
                         q: "{searchQuery}"
                       </span>
                     )}
                     {showOnlyFavorites && (
-                      <span className="px-2 py-0.5 rounded-lg bg-amber-950/60 border border-amber-800/40 text-amber-300 flex items-center gap-1">
-                        <Star className="w-3 h-3 fill-amber-300" />
+                      <span className="px-2 py-0.5 rounded-lg bg-amber-100 dark:bg-amber-950/60 border border-amber-300 dark:border-amber-800/40 text-amber-800 dark:text-amber-300 flex items-center gap-1">
+                        <Star className="w-3 h-3 fill-amber-500" />
                         Starred
                       </span>
                     )}
                     {selectedCategory && (
-                      <span className="px-2 py-0.5 rounded-lg bg-indigo-950/60 border border-indigo-800/40 text-indigo-300 flex items-center gap-1">
+                      <span className="px-2 py-0.5 rounded-lg bg-indigo-100 dark:bg-indigo-950/60 border border-indigo-300 dark:border-indigo-800/40 text-indigo-800 dark:text-indigo-300 flex items-center gap-1">
                         cat: {selectedCategory}
                       </span>
                     )}
                     {selectedTool && (
-                      <span className="px-2 py-0.5 rounded-lg bg-emerald-950/60 border border-emerald-800/40 text-emerald-300 flex items-center gap-1">
+                      <span className="px-2 py-0.5 rounded-lg bg-emerald-100 dark:bg-emerald-950/60 border border-emerald-300 dark:border-emerald-800/40 text-emerald-800 dark:text-emerald-300 flex items-center gap-1">
                         tool: {selectedTool}
                       </span>
                     )}
                     {selectedHarness && (
-                      <span className="px-2 py-0.5 rounded-lg bg-purple-950/60 border border-purple-800/40 text-purple-300 flex items-center gap-1">
+                      <span className="px-2 py-0.5 rounded-lg bg-purple-100 dark:bg-purple-950/60 border border-purple-300 dark:border-purple-800/40 text-purple-800 dark:text-purple-300 flex items-center gap-1">
                         harness: {selectedHarness}
                       </span>
                     )}
                     {selectedTag && (
-                      <span className="px-2 py-0.5 rounded-lg bg-amber-950/60 border border-amber-800/40 text-amber-300 flex items-center gap-1 font-mono">
+                      <span className="px-2 py-0.5 rounded-lg bg-amber-100 dark:bg-amber-950/60 border border-amber-300 dark:border-amber-800/40 text-amber-800 dark:text-amber-300 flex items-center gap-1 font-mono">
                         #{selectedTag}
                       </span>
                     )}
@@ -428,19 +479,49 @@ export function App() {
                 )}
               </div>
 
-              {/* VIEW MODE 1: GRID CARDS */}
-              {viewMode === 'grid' && (
+              {/* VIEW MODE 1: TABLE MATRIX (DEFAULT) */}
+              {viewMode === 'table' && (
                 <div>
                   {filteredSkills.length === 0 ? (
                     <div className="glass-panel rounded-2xl p-12 text-center space-y-3">
-                      <Search className="w-8 h-8 text-slate-600 mx-auto" />
-                      <h3 className="text-base font-semibold text-slate-300">No matching skills found</h3>
+                      <Search className="w-8 h-8 text-slate-400 dark:text-slate-600 mx-auto" />
+                      <h3 className="text-base font-semibold text-slate-700 dark:text-slate-300">No matching skills found</h3>
                       <p className="text-xs text-slate-500 max-w-sm mx-auto">
                         Try adjusting your keywords, selecting a different category, or resetting all active filters.
                       </p>
                       <button
                         onClick={handleClearAllFilters}
-                        className="px-4 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-xs font-medium text-slate-200 transition"
+                        className="px-4 py-2 rounded-xl bg-slate-200 dark:bg-slate-800 hover:bg-slate-300 dark:hover:bg-slate-700 text-xs font-medium text-slate-800 dark:text-slate-200 transition"
+                      >
+                        Reset Filters
+                      </button>
+                    </div>
+                  ) : (
+                    <SkillMatrix
+                      skills={filteredSkills}
+                      onSelect={setSelectedSkill}
+                      onCopyPrompt={(p) => showToast('AI Prompt copied to clipboard!')}
+                      favorites={favorites}
+                      onToggleFavorite={toggleFavorite}
+                      activeIndex={activeIndex}
+                    />
+                  )}
+                </div>
+              )}
+
+              {/* VIEW MODE 2: GRID CARDS */}
+              {viewMode === 'grid' && (
+                <div>
+                  {filteredSkills.length === 0 ? (
+                    <div className="glass-panel rounded-2xl p-12 text-center space-y-3">
+                      <Search className="w-8 h-8 text-slate-400 dark:text-slate-600 mx-auto" />
+                      <h3 className="text-base font-semibold text-slate-700 dark:text-slate-300">No matching skills found</h3>
+                      <p className="text-xs text-slate-500 max-w-sm mx-auto">
+                        Try adjusting your keywords, selecting a different category, or resetting all active filters.
+                      </p>
+                      <button
+                        onClick={handleClearAllFilters}
+                        className="px-4 py-2 rounded-xl bg-slate-200 dark:bg-slate-800 hover:bg-slate-300 dark:hover:bg-slate-700 text-xs font-medium text-slate-800 dark:text-slate-200 transition"
                       >
                         Reset Filters
                       </button>
@@ -463,29 +544,17 @@ export function App() {
                 </div>
               )}
 
-              {/* VIEW MODE 2: TABLE MATRIX */}
-              {viewMode === 'table' && (
-                <SkillMatrix
-                  skills={filteredSkills}
-                  onSelect={setSelectedSkill}
-                  onCopyPrompt={(p) => showToast('AI Prompt copied to clipboard!')}
-                  favorites={favorites}
-                  onToggleFavorite={toggleFavorite}
-                  activeIndex={activeIndex}
-                />
-              )}
-
               {/* VIEW MODE 3: STATS DASHBOARD */}
               {viewMode === 'dashboard' && (
                 <StatsDashboard
                   catalog={catalog}
                   onSelectCategory={(catId) => {
                     setSelectedCategory(catId);
-                    setViewMode('grid');
+                    setViewMode('table');
                   }}
                   onSelectTag={(t) => {
                     setSelectedTag(t);
-                    setViewMode('grid');
+                    setViewMode('table');
                   }}
                 />
               )}
@@ -497,19 +566,19 @@ export function App() {
       </main>
 
       {/* Footer with Keyboard Cheatsheet */}
-      <footer className="w-full border-t border-slate-800/80 bg-slate-950 px-4 py-6 text-xs text-slate-500 text-center">
+      <footer className="w-full border-t border-slate-200 dark:border-slate-800/80 bg-slate-100 dark:bg-slate-950 px-4 py-6 text-xs text-slate-500 text-center transition-colors">
         <div className="max-w-7xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-3">
           <div className="flex items-center gap-3">
-            <span className="flex items-center gap-1 text-slate-400 font-mono text-[11px]">
-              <Keyboard className="w-3.5 h-3.5 text-cyan-400" />
-              <kbd className="px-1 py-0.2 bg-slate-900 rounded border border-slate-800">j</kbd>/<kbd className="px-1 py-0.2 bg-slate-900 rounded border border-slate-800">k</kbd> navigate
-              <kbd className="px-1 py-0.2 bg-slate-900 rounded border border-slate-800 ml-1">Enter</kbd> open
-              <kbd className="px-1 py-0.2 bg-slate-900 rounded border border-slate-800 ml-1">c</kbd> copy
-              <kbd className="px-1 py-0.2 bg-slate-900 rounded border border-slate-800 ml-1">s</kbd> star
-              <kbd className="px-1 py-0.2 bg-slate-900 rounded border border-slate-800 ml-1">/</kbd> search
+            <span className="flex items-center gap-1 text-slate-600 dark:text-slate-400 font-mono text-[11px]">
+              <Keyboard className="w-3.5 h-3.5 text-indigo-600 dark:text-cyan-400" />
+              <kbd className="px-1 py-0.2 bg-slate-200 dark:bg-slate-900 rounded border border-slate-300 dark:border-slate-800">j</kbd>/<kbd className="px-1 py-0.2 bg-slate-200 dark:bg-slate-900 rounded border border-slate-300 dark:border-slate-800">k</kbd> navigate
+              <kbd className="px-1 py-0.2 bg-slate-200 dark:bg-slate-900 rounded border border-slate-300 dark:border-slate-800 ml-1">Enter</kbd> open
+              <kbd className="px-1 py-0.2 bg-slate-200 dark:bg-slate-900 rounded border border-slate-300 dark:border-slate-800 ml-1">c</kbd> copy
+              <kbd className="px-1 py-0.2 bg-slate-200 dark:bg-slate-900 rounded border border-slate-300 dark:border-slate-800 ml-1">s</kbd> star
+              <kbd className="px-1 py-0.2 bg-slate-200 dark:bg-slate-900 rounded border border-slate-300 dark:border-slate-800 ml-1">/</kbd> search
             </span>
           </div>
-          <div className="flex items-center gap-4 text-slate-400">
+          <div className="flex items-center gap-4 text-slate-500 dark:text-slate-400">
             <span>Production Safe (Read-Only)</span>
             <span>Zero Telemetry</span>
             <span>MIT License</span>
