@@ -131,15 +131,19 @@ export const Sidebar: React.FC<SidebarProps> = ({
           onClick={() => onSelectCategory(null)}
           className={`w-full flex items-center justify-between px-3 py-2 rounded-xl text-xs font-medium transition ${
             selectedCategory === null
-              ? 'bg-indigo-50 dark:bg-gradient-to-r dark:from-cyan-500/20 dark:to-indigo-500/20 text-indigo-700 dark:text-cyan-300 border border-indigo-200 dark:border-cyan-500/30 shadow-sm font-semibold'
-              : 'text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-900/80 hover:text-slate-900 dark:hover:text-white border border-transparent'
+              ? 'bg-indigo-50 text-indigo-900 border border-indigo-200 dark:bg-indigo-600/25 dark:text-indigo-200 dark:border-indigo-500/40 shadow-sm font-semibold'
+              : 'text-slate-700 hover:bg-slate-100 hover:text-slate-900 dark:text-slate-300 dark:hover:bg-slate-900/80 dark:hover:text-white border border-transparent'
           }`}
         >
           <div className="flex items-center gap-2.5">
             <Layers className="w-4 h-4 text-indigo-600 dark:text-cyan-400" />
             <span>All Categories</span>
           </div>
-          <span className="px-2 py-0.5 rounded-md bg-slate-200 dark:bg-slate-800 text-[11px] font-mono text-slate-600 dark:text-slate-400">
+          <span className={`px-2 py-0.5 rounded-md text-[11px] font-mono shrink-0 ${
+            selectedCategory === null
+              ? 'bg-indigo-100 text-indigo-800 dark:bg-indigo-500/30 dark:text-indigo-200'
+              : 'bg-slate-200 text-slate-600 dark:bg-slate-800/80 dark:text-slate-400'
+          }`}>
             {totalSkills}
           </span>
         </button>
@@ -153,8 +157,8 @@ export const Sidebar: React.FC<SidebarProps> = ({
               onClick={() => onSelectCategory(isSelected ? null : cat.id)}
               className={`w-full flex items-center justify-between px-3 py-2 rounded-xl text-xs font-medium transition ${
                 isSelected
-                  ? 'bg-indigo-100 dark:bg-indigo-600/30 text-indigo-900 dark:text-indigo-200 border border-indigo-300 dark:border-indigo-500/50 shadow-sm font-semibold'
-                  : 'text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-900/80 hover:text-slate-900 dark:hover:text-white border border-transparent'
+                  ? 'bg-indigo-50 text-indigo-900 border border-indigo-200 dark:bg-indigo-600/25 dark:text-indigo-200 dark:border-indigo-500/40 shadow-sm font-semibold'
+                  : 'text-slate-700 hover:bg-slate-100 hover:text-slate-900 dark:text-slate-300 dark:hover:bg-slate-900/80 dark:hover:text-white border border-transparent'
               }`}
             >
               <div className="flex items-center gap-2.5 truncate pr-2">
@@ -164,7 +168,9 @@ export const Sidebar: React.FC<SidebarProps> = ({
                 <span className="truncate">{cat.name}</span>
               </div>
               <span className={`px-2 py-0.5 rounded-md text-[11px] font-mono shrink-0 ${
-                isSelected ? 'bg-indigo-200 dark:bg-indigo-500/30 text-indigo-900 dark:text-indigo-200' : 'bg-slate-200 dark:bg-slate-800/80 text-slate-600 dark:text-slate-400'
+                isSelected
+                  ? 'bg-indigo-100 text-indigo-800 dark:bg-indigo-500/30 dark:text-indigo-200'
+                  : 'bg-slate-200 text-slate-600 dark:bg-slate-800/80 dark:text-slate-400'
               }`}>
                 {cat.count}
               </span>
