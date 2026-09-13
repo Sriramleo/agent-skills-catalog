@@ -1,6 +1,6 @@
 {
   "name": "@sriram8438/agent-skills-catalog",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "type": "module",
   "description": "Universal AI agent skills explorer, catalog & interactive web viewer. Discover, search, categorize, and inspect skills across Antigravity, Claude Code, Cursor, Codex, and custom harnesses.",
   "keywords": [
