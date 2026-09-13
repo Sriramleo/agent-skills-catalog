@@ -104,6 +104,9 @@ jobs:
         with:
           node-version: 22.x
 
+      - name: Upgrade NPM to latest (Required for Trusted Publishers OIDC)
+        run: npm install -g npm@latest
+
       - name: Install Dependencies
         run: npm ci
 
