@@ -4,6 +4,7 @@ export declare class SkillParser {
      * Parses a raw SKILL.md or workflow.md file and its directory assets into a rich Skill object.
      */
     static parseFile(filePath: string, harness: HarnessType, harnessLabel: string, sourceDir: string): Skill | null;
+    private static extractAuthor;
     private static determineInvocationType;
     private static extractFrontmatter;
     private static formatTitle;

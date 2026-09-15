@@ -19,10 +19,11 @@ interface SkillMatrixProps {
   onCopyPrompt: (text: string) => void;
   favorites: Set<string>;
   onToggleFavorite: (skillId: string) => void;
+  onSelectAuthor?: (author: string) => void;
   activeIndex?: number;
 }
 
-type SortField = 'title' | 'category' | 'harness' | 'tokens' | 'assets' | 'favorite';
+type SortField = 'title' | 'category' | 'author' | 'harness' | 'tokens' | 'assets' | 'favorite';
 type SortOrder = 'asc' | 'desc';
 
 export const SkillMatrix: React.FC<SkillMatrixProps> = ({
@@ -31,6 +32,7 @@ export const SkillMatrix: React.FC<SkillMatrixProps> = ({
   onCopyPrompt,
   favorites,
   onToggleFavorite,
+  onSelectAuthor,
   activeIndex = -1
 }) => {
   const [sortField, setSortField] = useState<SortField>('title');
@@ -61,6 +63,9 @@ export const SkillMatrix: React.FC<SkillMatrixProps> = ({
           break;
         case 'category':
           comparison = a.category.localeCompare(b.category);
+          break;
+        case 'author':
+          comparison = (a.author || '').localeCompare(b.author || '');
           break;
         case 'harness':
           comparison = a.harness.localeCompare(b.harness);
@@ -121,6 +126,15 @@ export const SkillMatrix: React.FC<SkillMatrixProps> = ({
               >
                 <div className="flex items-center gap-1.5">
                   <span>Category</span>
+                  <ArrowUpDown className="w-3.5 h-3.5" />
+                </div>
+              </th>
+              <th
+                onClick={() => handleSort('author')}
+                className="py-3.5 px-4 cursor-pointer hover:text-slate-900 dark:hover:text-white transition"
+              >
+                <div className="flex items-center gap-1.5">
+                  <span>Author / Creator</span>
                   <ArrowUpDown className="w-3.5 h-3.5" />
                 </div>
               </th>
@@ -217,6 +231,26 @@ export const SkillMatrix: React.FC<SkillMatrixProps> = ({
                       <CategoryIcon name={skill.category} className="w-3 h-3 text-indigo-600 dark:text-cyan-400" />
                       <span className="capitalize">{skill.category.replace(/-/g, ' ')}</span>
                     </span>
+                  </td>
+
+                  {/* Author / Creator */}
+                  <td className="py-3 px-4 whitespace-nowrap">
+                    {skill.author ? (
+                      <button
+                        onClick={(e) => {
+                          if (onSelectAuthor && skill.author) {
+                            e.stopPropagation();
+                            onSelectAuthor(skill.author);
+                          }
+                        }}
+                        className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[11px] font-medium bg-slate-100 dark:bg-slate-900 border border-slate-200 dark:border-slate-800/80 text-slate-700 dark:text-slate-300 hover:border-indigo-400 dark:hover:border-cyan-500 transition"
+                        title={`Filter by author: ${skill.author}`}
+                      >
+                        <span className="truncate max-w-[130px]">{skill.author}</span>
+                      </button>
+                    ) : (
+                      <span className="text-slate-400 dark:text-slate-600 text-xs">—</span>
+                    )}
                   </td>
 
                   {/* Harness */}

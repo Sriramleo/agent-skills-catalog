@@ -82,4 +82,41 @@ npm test
     expect(skill.howToUse).toContain('Run the test runner');
     expect(skill.stats.tokenEstimate).toBeGreaterThan(10);
   });
+
+  it('should correctly identify Matt Pocock and ECC authors from content and frontmatter', () => {
+    const mattFile = path.join(tmpDir, 'matt-SKILL.md');
+    fs.writeFileSync(
+      mattFile,
+      `---
+name: migrate-to-shoehorn
+description: Migrate test files from as assertions to @total-typescript/shoehorn by Matt Pocock.
+---
+# Migrate to Shoehorn
+Use when replacing as type assertions.
+`,
+      'utf8'
+    );
+
+    const mattSkill = SkillParser.parseFile(mattFile, 'workspace', 'Workspace', tmpDir);
+    expect(mattSkill).not.toBeNull();
+    expect(mattSkill?.author).toBe('Matt Pocock');
+
+    const eccFile = path.join(tmpDir, 'ecc-SKILL.md');
+    fs.writeFileSync(
+      eccFile,
+      `---
+name: agentic-engineering
+description: Operate as an agentic engineer following ECC standards and Everything Claude Code best practices.
+origin: ECC
+---
+# Agentic Engineering
+Operate with rigor.
+`,
+      'utf8'
+    );
+
+    const eccSkill = SkillParser.parseFile(eccFile, 'workspace', 'Workspace', tmpDir);
+    expect(eccSkill).not.toBeNull();
+    expect(eccSkill?.author).toBe('ECC (Everything Claude Code)');
+  });
 });

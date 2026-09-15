@@ -69,6 +69,7 @@ export class SkillParser {
             const stats = this.calculateStats(content, assets);
             const detectedTools = this.detectToolsAndMcp(content, rawDescription);
             const slashCommand = `/${id}`;
+            const author = this.extractAuthor(id, frontmatter, content, rawDescription, realFilePath, isWorkflowDir);
             return {
                 id,
                 name: frontmatter.name || id,
@@ -97,7 +98,7 @@ export class SkillParser {
                 assets,
                 stats,
                 version: frontmatter.version ? String(frontmatter.version) : undefined,
-                author: frontmatter.author ? String(frontmatter.author) : undefined,
+                author,
                 updatedAt: this.getFileMtime(realFilePath)
             };
         }
@@ -105,6 +106,75 @@ export class SkillParser {
             console.error(`[SkillParser] Failed to parse ${filePath}:`, err);
             return null;
         }
+    }
+    static extractAuthor(id, frontmatter, content, rawDescription, filePath, isWorkflowDir) {
+        // 1. Explicit frontmatter author / creator / maintainer / vendor
+        const explicit = frontmatter.author || frontmatter.creator || frontmatter.maintainer || frontmatter.vendor;
+        if (explicit) {
+            if (typeof explicit === 'string' && explicit.trim()) {
+                const val = explicit.trim();
+                if (/claudekit/i.test(val))
+                    return 'Claudekit';
+                if (/evos/i.test(val))
+                    return 'Evos';
+                if (/matt[-_ ]?pocock|total[-_ ]?typescript/i.test(val))
+                    return 'Matt Pocock';
+                if (/baoyu/i.test(val))
+                    return 'Baoyu';
+                if (/everything claude code|ecc/i.test(val))
+                    return 'ECC (Everything Claude Code)';
+                return val;
+            }
+            if (typeof explicit === 'object' && explicit.name) {
+                return String(explicit.name).trim();
+            }
+        }
+        // 2. Frontmatter origin check
+        if (frontmatter.origin && typeof frontmatter.origin === 'string') {
+            if (/ecc|everything claude code/i.test(frontmatter.origin)) {
+                return 'ECC (Everything Claude Code)';
+            }
+            return frontmatter.origin.trim();
+        }
+        // 3. Matt Pocock / Total TypeScript detection
+        const text = `${id} ${rawDescription} ${content}`.toLowerCase();
+        if (id.includes('matt-pocock') ||
+            id.includes('shoehorn') ||
+            text.includes('matt pocock') ||
+            text.includes('@total-typescript') ||
+            text.includes('total typescript')) {
+            return 'Matt Pocock';
+        }
+        // 4. Baoyu skills detection
+        if (id.startsWith('baoyu-') || text.includes('baoyu.io') || text.includes('by baoyu')) {
+            return 'Baoyu';
+        }
+        // 5. Remotion skills detection
+        if (id.startsWith('remotion-') || id === 'remotion' || text.includes('remotion.dev')) {
+            return 'Remotion';
+        }
+        // 6. ECC (Everything Claude Code) detection
+        if (text.includes('everything claude code') ||
+            text.includes('everything-claude-code') ||
+            text.includes('ecc standards') ||
+            text.includes('affaan / ecc') ||
+            filePath.includes('.agents/skills/ecc-') ||
+            filePath.includes('everything-claude-code')) {
+            return 'ECC (Everything Claude Code)';
+        }
+        // 7. Workflows in .agents/workflows or .claude/commands
+        if (isWorkflowDir) {
+            return 'Workspace Slash Workflows';
+        }
+        // 8. If in .agents/skills (workspace skills)
+        if (filePath.includes('.agents/skills')) {
+            return 'Workspace / ECC';
+        }
+        // 9. If in ~/.gemini/config/skills or ~/.claude/skills
+        if (filePath.includes('.gemini/config/skills') || filePath.includes('.claude/skills')) {
+            return 'Global Agent Skills';
+        }
+        return 'Community';
     }
     static determineInvocationType(id, isWorkflowDir, frontmatter, description, content) {
         // 1. If in workflows folder or frontmatter explicitly says user-invoked / slash command

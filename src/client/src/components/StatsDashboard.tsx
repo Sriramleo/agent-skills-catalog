@@ -1,6 +1,3 @@
-import React from 'react';
-import { SkillCatalogResult } from '../types';
-import { CategoryIcon } from './CategoryIcon';
 import {
   Sparkles,
   Bot,
@@ -11,19 +8,22 @@ import {
   FileCode,
   ShieldCheck,
   TrendingUp,
-  Cpu
+  Cpu,
+  UserCheck
 } from 'lucide-react';
 
 interface StatsDashboardProps {
   catalog: SkillCatalogResult;
   onSelectCategory: (catId: string) => void;
   onSelectTag: (tag: string) => void;
+  onSelectAuthor?: (author: string) => void;
 }
 
 export const StatsDashboard: React.FC<StatsDashboardProps> = ({
   catalog,
   onSelectCategory,
-  onSelectTag
+  onSelectTag,
+  onSelectAuthor
 }) => {
   const totalTokens = catalog.skills.reduce((acc, s) => acc + s.stats.tokenEstimate, 0);
   const avgTokens = catalog.skills.length > 0 ? Math.round(totalTokens / catalog.skills.length) : 0;
@@ -152,6 +152,34 @@ export const StatsDashboard: React.FC<StatsDashboardProps> = ({
               ))}
             </div>
           </div>
+
+          {/* Authors & Curators Breakdown */}
+          {catalog.authors && catalog.authors.length > 0 && (
+            <div className="glass-panel rounded-2xl p-6 border border-slate-200 dark:border-slate-800 space-y-4 shadow-lg transition-colors">
+              <div className="flex items-center justify-between">
+                <h3 className="text-sm font-bold text-slate-900 dark:text-slate-200 flex items-center gap-2">
+                  <UserCheck className="w-4 h-4 text-indigo-600 dark:text-cyan-400" />
+                  Authors & Ecosystem Distribution
+                </h3>
+                <span className="text-xs text-slate-500">Click to filter</span>
+              </div>
+
+              <div className="flex flex-wrap gap-2">
+                {catalog.authors.map(({ author, count }) => (
+                  <button
+                    key={author}
+                    onClick={() => onSelectAuthor && onSelectAuthor(author)}
+                    className="px-2.5 py-1 rounded-lg bg-slate-100 dark:bg-slate-900 hover:bg-slate-200 dark:hover:bg-slate-800 border border-slate-200 dark:border-slate-800 hover:border-indigo-400 dark:hover:border-cyan-500/50 text-slate-700 dark:text-slate-300 hover:text-indigo-800 dark:hover:text-cyan-200 text-xs font-medium transition flex items-center gap-1.5"
+                  >
+                    <span>{author}</span>
+                    <span className="text-[10px] px-1.5 py-0.2 rounded-full bg-indigo-100 dark:bg-indigo-950 text-indigo-700 dark:text-indigo-300 font-mono">
+                      {count}
+                    </span>
+                  </button>
+                ))}
+              </div>
+            </div>
+          )}
 
           {/* Top Technologies / Tags */}
           <div className="glass-panel rounded-2xl p-6 border border-slate-200 dark:border-slate-800 space-y-4 shadow-lg transition-colors">

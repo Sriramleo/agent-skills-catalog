@@ -85,6 +85,10 @@ export interface LintSummary {
 export interface SkillCatalogResult {
     skills: Skill[];
     categories: SkillCategory[];
+    authors: {
+        author: string;
+        count: number;
+    }[];
     tags: {
         tag: string;
         count: number;

@@ -13,7 +13,8 @@ import {
   Star,
   RotateCcw,
   Wrench,
-  Zap
+  Zap,
+  User
 } from 'lucide-react';
 
 interface SkillCardProps {
@@ -192,8 +193,17 @@ export const SkillCard: React.FC<SkillCardProps> = ({
           </p>
         </div>
 
-        {/* Detected Tools & Tags */}
-        <div className="flex flex-wrap gap-1 mb-3">
+        {/* Author Badge & Detected Tools & Tags */}
+        <div className="flex flex-wrap items-center gap-1 mb-3">
+          {skill.author && (
+            <span
+              className="text-[10px] px-2 py-0.5 rounded-md bg-indigo-50 dark:bg-indigo-950/60 text-indigo-700 dark:text-indigo-300 border border-indigo-200 dark:border-indigo-800/40 font-medium flex items-center gap-1"
+              title={`Author: ${skill.author}`}
+            >
+              <User className="w-2.5 h-2.5" />
+              <span className="truncate max-w-[120px]">{skill.author}</span>
+            </span>
+          )}
           {skill.detectedTools.slice(0, 2).map((tool) => (
             <span
               key={tool}
@@ -203,7 +213,7 @@ export const SkillCard: React.FC<SkillCardProps> = ({
               {tool}
             </span>
           ))}
-          {skill.tags.slice(0, 3).map((tag) => (
+          {skill.tags.slice(0, 2).map((tag) => (
             <span
               key={tag}
               className="text-[10px] px-2 py-0.5 rounded-md bg-slate-100 dark:bg-slate-900/90 text-slate-600 dark:text-slate-400 border border-slate-200 dark:border-slate-800/80 font-mono"

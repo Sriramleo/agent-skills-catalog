@@ -286,6 +286,18 @@ export class SkillScanner {
       count: skills.filter((s) => s.category === c.id).length
     })).filter((c) => c.count > 0);
 
+    // Build authors stats
+    const authorCountMap = new Map<string, number>();
+    for (const skill of skills) {
+      if (skill.author) {
+        authorCountMap.set(skill.author, (authorCountMap.get(skill.author) || 0) + 1);
+      }
+    }
+
+    const authors = Array.from(authorCountMap.entries())
+      .map(([author, count]) => ({ author, count }))
+      .sort((a, b) => b.count - a.count);
+
     // Build tags stats
     const tagCountMap = new Map<string, number>();
     for (const skill of skills) {
@@ -319,6 +331,7 @@ export class SkillScanner {
     return {
       skills,
       categories,
+      authors,
       tags,
       tools,
       harnesses,

@@ -20,7 +20,8 @@ import {
   Wrench,
   Code2,
   AlertTriangle,
-  Bot
+  Bot,
+  User
 } from 'lucide-react';
 
 interface SkillModalProps {
@@ -131,6 +132,12 @@ export const SkillModal: React.FC<SkillModalProps> = ({
                 <CategoryIcon name={skill.category} className="w-3.5 h-3.5" />
                 <span className="capitalize">{skill.category.replace(/-/g, ' ')}</span>
               </span>
+              {skill.author && (
+                <span className="text-xs font-medium px-2.5 py-0.5 rounded-full bg-indigo-50 dark:bg-indigo-950/80 text-indigo-700 dark:text-indigo-300 border border-indigo-200 dark:border-indigo-800 flex items-center gap-1.5">
+                  <User className="w-3 h-3 text-indigo-600 dark:text-cyan-400" />
+                  <span>{skill.author}</span>
+                </span>
+              )}
               <span className="text-xs px-2.5 py-0.5 rounded-full bg-slate-200 dark:bg-slate-800 text-slate-700 dark:text-slate-300 border border-slate-300 dark:border-slate-700">
                 {skill.harnessLabel}
               </span>
@@ -523,6 +530,12 @@ export const SkillModal: React.FC<SkillModalProps> = ({
                   <span className="text-slate-500">Skill ID: </span>
                   <span className="text-indigo-600 dark:text-cyan-300 font-bold">{skill.id}</span>
                 </div>
+                {skill.author && (
+                  <div>
+                    <span className="text-slate-500">Author / Creator: </span>
+                    <span className="text-indigo-600 dark:text-indigo-300 font-semibold">{skill.author}</span>
+                  </div>
+                )}
                 <div>
                   <span className="text-slate-500">Slash Command: </span>
                   <span className="text-indigo-600 dark:text-cyan-300">{skill.slashCommand}</span>

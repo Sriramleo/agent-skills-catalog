@@ -68,6 +68,7 @@ export function App() {
   // Filters State — Table view as default
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
+  const [selectedAuthor, setSelectedAuthor] = useState<string | null>(null);
   const [selectedHarness, setSelectedHarness] = useState<string | null>(null);
   const [selectedTag, setSelectedTag] = useState<string | null>(null);
   const [selectedTool, setSelectedTool] = useState<string | null>(null);
@@ -146,6 +147,7 @@ export function App() {
     const params = new URLSearchParams(window.location.search);
     const qParam = params.get('q');
     const catParam = params.get('category');
+    const authorParam = params.get('author');
     const harnessParam = params.get('harness');
     const tagParam = params.get('tag');
     const toolParam = params.get('tool');
@@ -154,6 +156,7 @@ export function App() {
 
     if (qParam) setSearchQuery(qParam);
     if (catParam) setSelectedCategory(catParam);
+    if (authorParam) setSelectedAuthor(authorParam);
     if (harnessParam) setSelectedHarness(harnessParam);
     if (tagParam) setSelectedTag(tagParam);
     if (toolParam) setSelectedTool(toolParam);
@@ -170,6 +173,7 @@ export function App() {
     const params = new URLSearchParams();
     if (searchQuery) params.set('q', searchQuery);
     if (selectedCategory) params.set('category', selectedCategory);
+    if (selectedAuthor) params.set('author', selectedAuthor);
     if (selectedHarness) params.set('harness', selectedHarness);
     if (selectedTag) params.set('tag', selectedTag);
     if (selectedTool) params.set('tool', selectedTool);
@@ -178,7 +182,7 @@ export function App() {
 
     const newUrl = `${window.location.pathname}${params.toString() ? '?' + params.toString() : ''}`;
     window.history.replaceState(null, '', newUrl);
-  }, [searchQuery, selectedCategory, selectedHarness, selectedTag, selectedTool, viewMode, selectedSkill]);
+  }, [searchQuery, selectedCategory, selectedAuthor, selectedHarness, selectedTag, selectedTool, viewMode, selectedSkill]);
 
   // Initialize Fuse.js for Instant Fuzzy Search
   const fuse = useMemo(() => {
@@ -187,6 +191,7 @@ export function App() {
       keys: [
         { name: 'id', weight: 0.4 },
         { name: 'title', weight: 0.3 },
+        { name: 'author', weight: 0.25 },
         { name: 'tags', weight: 0.2 },
         { name: 'detectedTools', weight: 0.2 },
         { name: 'description', weight: 0.15 },
@@ -212,36 +217,41 @@ export function App() {
       list = list.filter((s) => s.category.toLowerCase() === selectedCategory.toLowerCase());
     }
 
-    // 3. Harness Filter
+    // 3. Author Filter
+    if (selectedAuthor) {
+      list = list.filter((s) => (s.author || '').toLowerCase() === selectedAuthor.toLowerCase());
+    }
+
+    // 4. Harness Filter
     if (selectedHarness) {
       list = list.filter((s) => s.harness.toLowerCase() === selectedHarness.toLowerCase());
     }
 
-    // 4. Tag Filter
+    // 5. Tag Filter
     if (selectedTag) {
       list = list.filter((s) => s.tags.includes(selectedTag.toLowerCase()));
     }
 
-    // 5. Tool / MCP Filter
+    // 6. Tool / MCP Filter
     if (selectedTool) {
       list = list.filter((s) =>
         s.detectedTools.some((t) => t.toLowerCase() === selectedTool.toLowerCase())
       );
     }
 
-    // 6. Invocation Mode Filter (Manual Slash vs Auto Reference)
+    // 7. Invocation Mode Filter (Manual Slash vs Auto Reference)
     if (invocationMode === 'slash') {
       list = list.filter((s) => s.isManualSlashCommand);
     } else if (invocationMode === 'auto') {
       list = list.filter((s) => !s.isManualSlashCommand);
     }
 
-    // 7. Starred Filter
+    // 8. Starred Filter
     if (showOnlyFavorites) {
       list = list.filter((s) => favorites.has(s.id));
     }
 
-    // 8. Overridden Filter
+    // 9. Overridden Filter
     if (showOnlyOverridden) {
       list = list.filter((s) => s.overridesGlobal);
     }
@@ -251,6 +261,7 @@ export function App() {
     catalog,
     searchQuery,
     selectedCategory,
+    selectedAuthor,
     selectedHarness,
     selectedTag,
     selectedTool,
@@ -269,6 +280,7 @@ export function App() {
   const handleClearAllFilters = () => {
     setSearchQuery('');
     setSelectedCategory(null);
+    setSelectedAuthor(null);
     setSelectedHarness(null);
     setSelectedTag(null);
     setSelectedTool(null);
@@ -334,6 +346,7 @@ export function App() {
   const hasActiveFilters = Boolean(
     searchQuery ||
     selectedCategory ||
+    selectedAuthor ||
     selectedHarness ||
     selectedTag ||
     selectedTool ||
@@ -408,6 +421,9 @@ export function App() {
               categories={catalog.categories}
               selectedCategory={selectedCategory}
               onSelectCategory={setSelectedCategory}
+              authors={catalog.authors || []}
+              selectedAuthor={selectedAuthor}
+              onSelectAuthor={setSelectedAuthor}
               harnesses={catalog.harnesses}
               selectedHarness={selectedHarness}
               onSelectHarness={setSelectedHarness}
@@ -460,6 +476,11 @@ export function App() {
                         cat: {selectedCategory}
                       </span>
                     )}
+                    {selectedAuthor && (
+                      <span className="px-2 py-0.5 rounded-lg bg-indigo-100 dark:bg-indigo-950/60 border border-indigo-300 dark:border-indigo-800/40 text-indigo-800 dark:text-indigo-300 flex items-center gap-1 font-medium">
+                        author: {selectedAuthor}
+                      </span>
+                    )}
                     {selectedTool && (
                       <span className="px-2 py-0.5 rounded-lg bg-emerald-100 dark:bg-emerald-950/60 border border-emerald-300 dark:border-emerald-800/40 text-emerald-800 dark:text-emerald-300 flex items-center gap-1">
                         tool: {selectedTool}
@@ -503,6 +524,7 @@ export function App() {
                       onCopyPrompt={(p) => showToast('AI Prompt copied to clipboard!')}
                       favorites={favorites}
                       onToggleFavorite={toggleFavorite}
+                      onSelectAuthor={setSelectedAuthor}
                       activeIndex={activeIndex}
                     />
                   )}
