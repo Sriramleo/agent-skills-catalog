@@ -83,6 +83,7 @@ export interface LintSummary {
     }[];
 }
 export interface SkillCatalogResult {
+    version: string;
     skills: Skill[];
     categories: SkillCategory[];
     authors: {

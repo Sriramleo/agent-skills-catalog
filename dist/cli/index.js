@@ -1,3 +1,6 @@
+import fs from 'node:fs';
+import path from 'node:path';
+import { fileURLToPath } from 'node:url';
 import { Command } from 'commander';
 import open from 'open';
 import pc from 'picocolors';
@@ -6,11 +9,32 @@ import { SkillLinter } from '../core/linter.js';
 import { createServer } from '../server/app.js';
 import { TerminalView } from './terminal-view.js';
 import { StaticExporter } from './exporter.js';
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+function getCliVersion() {
+    try {
+        let curr = __dirname;
+        for (let i = 0; i < 4; i++) {
+            const pkgPath = path.join(curr, 'package.json');
+            if (fs.existsSync(pkgPath)) {
+                const pkg = JSON.parse(fs.readFileSync(pkgPath, 'utf-8'));
+                if (pkg.version)
+                    return pkg.version;
+            }
+            curr = path.dirname(curr);
+        }
+    }
+    catch {
+        // fallback
+    }
+    return '1.0.3';
+}
+const cliVersion = getCliVersion();
 const program = new Command();
 program
     .name('agent-skills-catalog')
     .description('⚡ Universal AI Agent Skills Explorer, Catalog & Interactive Web Viewer')
-    .version('1.0.0');
+    .version(cliVersion);
 // Global options
 program
     .option('-p, --port <port>', 'Port to run the web viewer server on', '4173')
@@ -92,7 +116,7 @@ program.action(async (options) => {
         return;
     }
     // Default Mode: Start interactive Web Server & Open Browser
-    TerminalView.renderBanner();
+    TerminalView.renderBanner(cliVersion);
     console.log(pc.cyan('⚡ Initializing Agent Skills Catalog server...'));
     const { app, getCatalog } = createServer(scanOptions);
     const port = parseInt(options.port, 10) || 4173;

@@ -125,7 +125,7 @@ export const Navbar: React.FC<NavbarProps> = ({
                   Skills Catalog
                 </span>
                 <span className="text-[10px] px-1.5 py-0.5 rounded bg-indigo-500/10 dark:bg-indigo-500/20 text-indigo-700 dark:text-indigo-300 font-mono border border-indigo-500/30">
-                  v1.0
+                  v{catalog?.version || '1.0.3'}
                 </span>
               </div>
               <p className="text-[11px] text-slate-500 dark:text-slate-400 hidden sm:block">Universal Agent Skills Hub</p>

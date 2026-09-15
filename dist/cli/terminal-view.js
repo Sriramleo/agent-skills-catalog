@@ -7,7 +7,7 @@ ${pc.dim('Universal AI Agent Skills Explorer & Browser')}
 `);
     }
     static renderSummary(catalog) {
-        this.renderBanner();
+        this.renderBanner(catalog.version);
         console.log(`${pc.bold('Total Skills:')} ${pc.green(catalog.totalSkills)}  ${pc.gray('|')}  ${pc.bold('Scan Time:')} ${pc.yellow(`${catalog.scanDurationMs}ms`)} ${catalog.overriddenCount > 0 ? ` ${pc.gray('|')} ${pc.bold('Workspace Overrides:')} ${pc.cyan(catalog.overriddenCount)}` : ''}`);
         console.log(`\n${pc.bold(pc.underline('Harness Sources:'))}`);
         for (const h of catalog.harnesses) {

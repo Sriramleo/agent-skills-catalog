@@ -1,6 +1,7 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import os from 'node:os';
+import { fileURLToPath } from 'node:url';
 import {
   Skill,
   SkillCategory,
@@ -12,6 +13,26 @@ import {
 import { SkillParser } from './parser.js';
 import { CANONICAL_CATEGORIES } from './categorizer.js';
 import { SecurityGuard } from './security.js';
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+
+function getPackageVersion(): string {
+  try {
+    let curr = __dirname;
+    for (let i = 0; i < 4; i++) {
+      const pkgPath = path.join(curr, 'package.json');
+      if (fs.existsSync(pkgPath)) {
+        const pkg = JSON.parse(fs.readFileSync(pkgPath, 'utf-8'));
+        if (pkg.version) return pkg.version;
+      }
+      curr = path.dirname(curr);
+    }
+  } catch {
+    // fallback
+  }
+  return '1.0.3';
+}
 
 interface HarnessLocation {
   harness: HarnessType;
@@ -329,6 +350,7 @@ export class SkillScanner {
     const scanDurationMs = Math.round(performance.now() - startTime);
 
     return {
+      version: getPackageVersion(),
       skills,
       categories,
       authors,
