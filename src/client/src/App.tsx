@@ -207,9 +207,95 @@ export function App() {
     if (!catalog) return [];
     let list = catalog.skills;
 
-    // 1. Text Search with Fuse
-    if (searchQuery.trim() && fuse) {
-      list = fuse.search(searchQuery.trim()).map((result) => result.item);
+    // 1. Text Search with Multi-Tiered Relevance Scoring
+    if (searchQuery.trim()) {
+      const q = searchQuery.trim().toLowerCase();
+      const qTokens = q.split(/[\s\-_/]+/).filter(Boolean);
+
+      const scored = list.map((skill) => {
+        let score = 0;
+        const idLower = skill.id.toLowerCase();
+        const slashLower = skill.slashCommand.toLowerCase();
+        const titleLower = skill.title.toLowerCase();
+        const authorLower = (skill.author || '').toLowerCase();
+        const tagsLower = skill.tags.map((t) => t.toLowerCase());
+        const toolsLower = skill.detectedTools.map((t) => t.toLowerCase());
+        const descLower = skill.description.toLowerCase();
+        const whenLower = skill.whenToUse.toLowerCase();
+
+        // 1. Exact match (Highest Priority)
+        if (idLower === q || slashLower === `/${q}` || slashLower === q) {
+          score += 1200;
+        } else if (titleLower === q) {
+          score += 1000;
+        }
+
+        // 2. Prefix match (e.g., 'writing-frag' -> 'writing-fragments')
+        if (idLower.startsWith(q) || slashLower.startsWith(`/${q}`)) {
+          score += 800;
+        } else if (titleLower.startsWith(q)) {
+          score += 700;
+        }
+
+        // 3. Substring match in ID or Title
+        if (idLower.includes(q)) {
+          score += 500;
+        } else if (titleLower.includes(q)) {
+          score += 450;
+        }
+
+        // 4. Token-level matching (all query tokens matched in ID/Title/Tags)
+        if (qTokens.length > 0) {
+          const allTokensInIdOrTitle = qTokens.every(
+            (token) => idLower.includes(token) || titleLower.includes(token)
+          );
+          if (allTokensInIdOrTitle) {
+            score += 350;
+          } else if (qTokens.length === 1) {
+            const anyTokenInIdOrTitle = qTokens.some(
+              (token) => idLower.includes(token) || titleLower.includes(token)
+            );
+            if (anyTokenInIdOrTitle) {
+              score += 100;
+            }
+          }
+        }
+
+        // 5. Author / Creator match
+        if (authorLower.includes(q)) {
+          score += 300;
+        }
+
+        // 6. Tags match
+        if (tagsLower.some((t) => t === q || t.includes(q))) {
+          score += 250;
+        }
+
+        // 7. Detected Tools match
+        if (toolsLower.some((t) => t === q || t.includes(q))) {
+          score += 200;
+        }
+
+        // 8. Description & whenToUse matches
+        if (descLower.includes(q) || whenLower.includes(q)) {
+          score += 150;
+        } else if (qTokens.length > 1) {
+          // All tokens must be present in content to prevent matching single common words
+          const allTokensInContent = qTokens.every(
+            (token) => descLower.includes(token) || whenLower.includes(token)
+          );
+          if (allTokensInContent) {
+            score += 80;
+          }
+        }
+
+        return { skill, score };
+      });
+
+      list = scored
+        .filter((item) => item.score > 0)
+        .sort((a, b) => b.score - a.score)
+        .map((item) => item.skill);
     }
 
     // 2. Category Filter
@@ -526,6 +612,7 @@ export function App() {
                       onToggleFavorite={toggleFavorite}
                       onSelectAuthor={setSelectedAuthor}
                       activeIndex={activeIndex}
+                      isSearchActive={Boolean(searchQuery.trim())}
                     />
                   )}
                 </div>
@@ -570,6 +657,9 @@ export function App() {
               {viewMode === 'dashboard' && (
                 <StatsDashboard
                   catalog={catalog}
+                  filteredSkills={filteredSkills}
+                  activeAuthorFilter={selectedAuthor}
+                  activeCategoryFilter={selectedCategory}
                   onSelectCategory={(catId) => {
                     setSelectedCategory(catId);
                     setViewMode('table');
@@ -577,6 +667,15 @@ export function App() {
                   onSelectTag={(t) => {
                     setSelectedTag(t);
                     setViewMode('table');
+                  }}
+                  onSelectAuthor={(a) => {
+                    setSelectedAuthor(a);
+                    setViewMode('table');
+                  }}
+                  onClearFilter={() => {
+                    setSelectedAuthor(null);
+                    setSelectedCategory(null);
+                    setSearchQuery('');
                   }}
                 />
               )}

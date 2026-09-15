@@ -107,6 +107,55 @@ export class SkillParser {
             return null;
         }
     }
+    static MATT_POCOCK_SKILLS = new Set([
+        'ask-matt',
+        'setup-matt-pocock-skills',
+        'to-spec',
+        'to-tickets',
+        'to-questionnaire',
+        'wayfinder',
+        'wait-what',
+        'wizard',
+        'implement',
+        'implement-spec',
+        'triage',
+        'loop-me',
+        'retro',
+        'teach',
+        'handoff',
+        'claude-handoff',
+        'writing-beats',
+        'writing-shape',
+        'writing-fragments',
+        'improve-codebase-architecture',
+        'setup-ts-deep-modules',
+        'migrate-to-shoehorn',
+        'codebase-design',
+        'domain-modeling',
+        'grilling',
+        'grill-me',
+        'grill-with-docs',
+        'writing-for-agents',
+        'planning-with-files',
+        'systematic-debugging',
+        'executing-plans',
+        'finishing-a-development-branch',
+        'subagent-driven-development',
+        'verification-before-completion',
+        'dispatching-parallel-agents',
+        'using-git-worktrees',
+        'using-superpowers',
+        'receiving-code-review',
+        'requesting-code-review',
+        'test-driven-development',
+        'tdd-workflow',
+        'diagnosing-bugs',
+        'prototype',
+        'research',
+        'resolving-merge-conflicts',
+        'writing-skills',
+        'writing-plans'
+    ]);
     static extractAuthor(id, frontmatter, content, rawDescription, filePath, isWorkflowDir) {
         // 1. Explicit frontmatter author / creator / maintainer / vendor
         const explicit = frontmatter.author || frontmatter.creator || frontmatter.maintainer || frontmatter.vendor;
@@ -136,11 +185,13 @@ export class SkillParser {
             }
             return frontmatter.origin.trim();
         }
-        // 3. Matt Pocock / Total TypeScript detection
+        // 3. Matt Pocock Suite Detection
         const text = `${id} ${rawDescription} ${content}`.toLowerCase();
-        if (id.includes('matt-pocock') ||
+        if (SkillParser.MATT_POCOCK_SKILLS.has(id) ||
+            id.includes('matt-pocock') ||
             id.includes('shoehorn') ||
             text.includes('matt pocock') ||
+            text.includes('aihero.dev') ||
             text.includes('@total-typescript') ||
             text.includes('total typescript')) {
             return 'Matt Pocock';
@@ -159,27 +210,27 @@ export class SkillParser {
             text.includes('ecc standards') ||
             text.includes('affaan / ecc') ||
             filePath.includes('.agents/skills/ecc-') ||
-            filePath.includes('everything-claude-code')) {
+            filePath.includes('everything-claude-code') ||
+            isWorkflowDir ||
+            filePath.includes('.agents/workflows') ||
+            filePath.includes('.agents/skills')) {
             return 'ECC (Everything Claude Code)';
         }
-        // 7. Workflows in .agents/workflows or .claude/commands
-        if (isWorkflowDir) {
-            return 'Workspace Slash Workflows';
-        }
-        // 8. If in .agents/skills (workspace skills)
-        if (filePath.includes('.agents/skills')) {
-            return 'Workspace / ECC';
-        }
-        // 9. If in ~/.gemini/config/skills or ~/.claude/skills
+        // 7. Global skills directory fallback
         if (filePath.includes('.gemini/config/skills') || filePath.includes('.claude/skills')) {
             return 'Global Agent Skills';
         }
         return 'Community';
     }
     static determineInvocationType(id, isWorkflowDir, frontmatter, description, content) {
-        // 1. If in workflows folder or frontmatter explicitly says user-invoked / slash command
-        if (isWorkflowDir ||
+        // 1. Explicit user-invoked flags or disable-model-invocation in frontmatter
+        const isDisableModelInvocation = frontmatter['disable-model-invocation'] === true ||
+            frontmatter['disable_model_invocation'] === true ||
+            frontmatter['disableModelInvocation'] === true;
+        if (isDisableModelInvocation ||
+            isWorkflowDir ||
             frontmatter.user_invoked === true ||
+            frontmatter['user-invoked'] === true ||
             frontmatter.type === 'workflow' ||
             frontmatter.slash_command === true ||
             frontmatter.command) {

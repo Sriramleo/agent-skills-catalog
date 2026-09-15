@@ -21,9 +21,10 @@ interface SkillMatrixProps {
   onToggleFavorite: (skillId: string) => void;
   onSelectAuthor?: (author: string) => void;
   activeIndex?: number;
+  isSearchActive?: boolean;
 }
 
-type SortField = 'title' | 'category' | 'author' | 'harness' | 'tokens' | 'assets' | 'favorite';
+type SortField = 'relevance' | 'title' | 'category' | 'author' | 'harness' | 'tokens' | 'assets' | 'favorite';
 type SortOrder = 'asc' | 'desc';
 
 export const SkillMatrix: React.FC<SkillMatrixProps> = ({
@@ -33,26 +34,34 @@ export const SkillMatrix: React.FC<SkillMatrixProps> = ({
   favorites,
   onToggleFavorite,
   onSelectAuthor,
-  activeIndex = -1
+  activeIndex = -1,
+  isSearchActive = false
 }) => {
-  const [sortField, setSortField] = useState<SortField>('title');
+  const [customSortField, setCustomSortField] = useState<SortField | null>(null);
   const [sortOrder, setSortOrder] = useState<SortOrder>('asc');
   const [copiedId, setCopiedId] = useState<string | null>(null);
   const [copiedSlash, setCopiedSlash] = useState<string | null>(null);
 
+  // Effective sort field: If user hasn't explicitly clicked a column header, use 'relevance' during search, else 'title'
+  const effectiveSortField: SortField = customSortField ?? (isSearchActive ? 'relevance' : 'title');
+
   const handleSort = (field: SortField) => {
-    if (sortField === field) {
+    if (effectiveSortField === field) {
       setSortOrder(sortOrder === 'asc' ? 'desc' : 'asc');
     } else {
-      setSortField(field);
+      setCustomSortField(field);
       setSortOrder('asc');
     }
   };
 
   const sortedSkills = useMemo(() => {
+    if (effectiveSortField === 'relevance') {
+      return skills;
+    }
+
     return [...skills].sort((a, b) => {
       let comparison = 0;
-      switch (sortField) {
+      switch (effectiveSortField) {
         case 'favorite':
           const aFav = favorites.has(a.id) ? 1 : 0;
           const bFav = favorites.has(b.id) ? 1 : 0;
@@ -79,7 +88,7 @@ export const SkillMatrix: React.FC<SkillMatrixProps> = ({
       }
       return sortOrder === 'asc' ? comparison : -comparison;
     });
-  }, [skills, sortField, sortOrder, favorites]);
+  }, [skills, effectiveSortField, sortOrder, favorites]);
 
   const handleCopyPrompt = (e: React.MouseEvent, skill: Skill) => {
     e.stopPropagation();
